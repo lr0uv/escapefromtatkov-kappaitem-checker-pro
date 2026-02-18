@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EFT - KappaItem Checker Pro | Beta</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+   .item-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+   .item-card:hover { transform: translateY(-5px); }
+   .item-card.found { background-color: #f0fdf4; border-color: #22c55e; }
+   .found-icon { filter: saturate(1.2) contrast(1.1); }
+   .missing-icon { filter: grayscale(1) opacity(0.2); }
+   .logged-in.hero-section { display: none; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800">
+
+    <div id="version-banner" class="bg-blue-600 text-white text-[10px] md:text-xs font-bold py-2 text-center tracking-wider uppercase">
+        <span id="ui-ver-text">最新バージョン 1.0.2.0 に対応しています</span>
+    </div>
+
+    <nav class="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 p-4 border-b border-slate-200">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-black tracking-tighter uppercase italic leading-none">EFT - KappaItem</h1>
+                <p class="text-[9px] font-bold text-blue-600 uppercase tracking-widest">Checker Pro <span class="bg-blue-100 px-1 rounded text-blue-800 ml-1">beta</span></p>
+            </div>
+            <div id="progress-area" class="flex items-center gap-4">
+                <div class="text-xs font-black text-emerald-600 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-200 shadow-sm">
+                    <span id="ui-prog-label">進捗</span>: <span id="found-count" class="text-lg">0</span> / 43
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto p-4 md:p-8">
+        
+        <section id="auth-section" class="bg-slate-900 rounded-[2.5rem] p-8 md:p-12 shadow-2xl mb-12 text-white relative overflow-hidden">
+            <div class="relative z-10">
+                <h2 class="text-2xl font-black mb-2 uppercase italic tracking-tighter">Secret Key Sync</h2>
+                <p class="text-slate-400 text-sm mb-8 max-w-md italic tracking-wide leading-relaxed">秘密の合言葉（シークレットキー）でデータを同期します。個人情報は不要です。</p>
+                
+                <div id="sync-controls" class="flex flex-col md:flex-row gap-4">
+                    <input type="text" id="key-input" placeholder="合言葉を入力 (Enter Key)" class="flex-grow px-6 py-4 rounded-2xl border-none focus:ring-4 focus:ring-blue-500/50 transition-all bg-white/10 text-white placeholder:text-slate-500 font-bold tracking-widest uppercase">
+                    <div class="flex gap-2">
+                        <button onclick="syncData('load')" class="bg-slate-700 text-white font-bold py-4 px-6 rounded-2xl hover:bg-slate-600 transition shadow-lg text-xs">呼び出す</button>
+                        <button onclick="syncData('save')" class="bg-blue-600 text-white font-black py-4 px-8 rounded-2xl hover:bg-blue-500 shadow-xl active:scale-95 transition-all text-xs">同期・保存</button>
+                    </div>
+                </div>
+                <p id="status-message" class="mt-4 text-xs font-bold hidden"></p>
+                <div class="mt-6 pt-6 border-t border-white/5">
+                    <button onclick="generateNewKey()" class="text-[10px] text-slate-500 hover:text-blue-400 font-bold uppercase tracking-widest underline decoration-dotted">合言葉を新しく作る</button>
+                </div>
+            </div>
+            <div class="absolute -right-20 -bottom-20 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl"></div>
+        </section>
+
+        <section id="kappa-guide" class="hero-section grid md:grid-cols-3 gap-8 mb-12">
+            <div class="md:col-span-2 bg-white p-8 md:p-10 rounded-[2.5rem] border border-slate-100 shadow-sm text-sm text-slate-600 leading-relaxed">
+                <h3 class="text-xl font-black mb-6 flex items-center gap-3 italic text-slate-900 leading-none">
+                    <span class="bg-yellow-400 w-2 h-8 rounded-full"></span>Kappaコンテナとは？
+                </h3>
+                <div class="grid sm:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <p>Escape From Tarkovにおける入手が非常に困難なエンドコンテンツアイテム。3×4の合計12マスを持つ最大サイズの安全コンテナとなっており、死亡しても中身を失わない究極の装備です 。</p>
+                        <ul class="space-y-2 list-disc pl-5 font-bold text-slate-800">
+                            <li>最大容量: 12スロット (3x4)</li>
+                            <li>モデル: Pelican V100 Case </li>
+                            <li>報酬タスク: Fence "Collector" [6, 7]</li>
+                        </ul>
+                    </div>
+                    <div class="bg-slate-50 rounded-3xl p-4 flex items-center justify-center border border-slate-100 shadow-inner">
+                        <img src="https://cdn.wikiwiki.jp/to/w/eft/img/::attach/Secure_container_Kappa_HB_JP.png" alt="Kappa Container" class="max-h-32 object-contain rounded-xl">
+                    </div>
+                </div>
+                <div class="mt-8 pt-8 border-t border-slate-50">
+                    <h4 class="font-black mb-3 text-slate-800 tracking-tight italic uppercase">Kappa Itemの概要</h4>
+                    <p>高難易度タスク「Collector」達成のために「Found in Raid（レイド内発見）」状態で収集・納品が必要なレアアイテム群です。タルコフ市民の最終目標とされています 。</p>
+                </div>
+            </div>
+            <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white flex flex-col justify-center shadow-xl relative overflow-hidden">
+                <p class="text-[10px] font-bold text-blue-400 uppercase mb-2 tracking-[0.2em]">Strategy Guide</p>
+                <h3 class="text-2xl font-black mb-4 tracking-tighter uppercase italic leading-none">How to get Kappa</h3>
+                <p class="text-[11px] text-slate-400 leading-relaxed mb-6 italic opacity-80">「Collector」タスクを出現させるには、ほぼ全てのトレーダータスクを完了し、高レベルに到達する必要があります [6, 8]。</p>
+                <div class="space-y-3 relative z-10">
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/10 flex items-center gap-3">
+                        <span class="text-xl font-black text-blue-500 leading-none">01</span>
+                        <span class="text-[10px] font-bold uppercase leading-none">全タスク完遂 / All Tasks</span>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/10 flex items-center gap-3">
+                        <span class="text-xl font-black text-emerald-500 leading-none">02</span>
+                        <span class="text-[10px] font-bold uppercase leading-none">43アイテム収集 / 43 Items</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div id="item-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 mb-20"></div>
+
+        <div class="my-16 text-center py-10 bg-slate-100 rounded-[2.5rem] border border-dashed border-slate-300">
+            <p class="text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.4em]">Advertisement Area</p>
+            <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX" data-ad-format="auto" data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle ||).push({});</script>
+        </div>
+
+        <section class="border-t border-slate-200 pt-16 grid md:grid-cols-2 gap-12 text-[10px] text-slate-400 leading-relaxed tracking-wider font-bold">
+            <div>
+                <h4 class="text-slate-800 mb-4 tracking-widest uppercase italic leading-none">Privacy Policy / プライバシーポリシー</h4>
+                <p>当サイトはGoogle AdSenseを利用して広告を配信しています。Cookieを使用して適切な広告を表示します。合言葉はSupabaseへ匿名保存され、当サイト側で個人情報を保持することはありません [4]。</p>
+            </div>
+            <div>
+                <h4 class="text-slate-800 mb-4 tracking-widest uppercase italic leading-none">Disclaimer / 免責事項</h4>
+                <p>当サイトは個人によるファンサイトであり、Battlestate Games社とは関係ありません。画像著作権は引用元の各権利者に帰属します [2]。情報の正確性については保証いたしません。</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="text-center py-20 text-slate-300 text-[10px] font-black uppercase tracking-[0.5em]">
+        <p>© 2026 EFT - KAPPAITEM CHECKER PRO. PROJECT FIR.</p>
+    </footer>
+
+    <div id="detail-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 hidden items-center justify-center p-4" onclick="closeModal()">
+        <div class="bg-white rounded-[3rem] max-w-sm w-full p-10 shadow-2xl relative border-4 border-slate-50" onclick="event.stopPropagation()">
+            <img id="modal-img" src="" class="w-32 h-32 mx-auto mb-8 object-contain">
+            <h3 id="modal-name" class="text-2xl font-black text-center mb-2 tracking-tighter uppercase italic text-slate-800"></h3>
+            <p id="modal-spawn" class="text-xs text-slate-400 text-center leading-relaxed font-bold tracking-widest uppercase mb-10"></p>
+            <button onclick="closeModal()" class="w-full bg-slate-900 text-white font-black py-5 rounded-[1.5rem] transition shadow-lg active:scale-95 tracking-[0.2em] text-xs uppercase">CLOSE DATA</button>
+        </div>
+    </div>
+
+    <script>
+        // 最新キーによる最適化済み接続設定 [9]
+        const SUPABASE_URL = "https://lbntemyfpdxmrzfiwzyn.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_AdOZ4kek_BGooR8OJRjrFQ_hvUZ6gfY";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // 2026/02/18 最新43アイテムデータ 
+        const items =; // 実際の43個のデータ配列が入ります
+
+        const wikiBase = "https://cdn.wikiwiki.jp/to/w/eft/img/::attach/";
+        let collected = JSON.parse(localStorage.getItem('eft_kappa_v6')) ||;
+
+        function renderGrid() {
+            const grid = document.getElementById('item-grid');
+            grid.innerHTML = "";
+            items.forEach(item => {
+                const isFound = collected.includes(item.id);
+                const card = document.createElement('div');
+                card.className = `item-card bg-white p-6 rounded-[2.5rem] border-2 cursor-pointer shadow-sm relative group ${isFound? 'found border-emerald-500' : 'border-slate-100'}`;
+                card.innerHTML = `
+                    <div class="relative flex justify-center mb-4">
+                        <img src="${wikiBase}${item.icon}" class="h-20 w-20 object-contain transition-all duration-700 ${isFound? 'found-icon' : 'missing-icon group-hover:opacity-60'}">
+                        ${isFound? '<div class="absolute -top-3 -right-3 bg-emerald-500 text-white rounded-full p-2 shadow-lg border-4 border-white animate-bounce"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg></div>' : ''}
+                    </div>
+                    <p class="text-[10px] text-center font-black uppercase leading-tight text-slate-800 h-8 flex items-center justify-center italic leading-none">${item.name}</p>
+                    <button onclick="showDetail('${item.id}', event)" class="absolute bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 text-[8px] font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full transition-all border border-blue-100">DETAILS</button>
+                `;
+                card.onclick = () => toggleItem(item.id);
+                grid.appendChild(card);
+            });
+            document.getElementById('found-count').innerText = collected.length;
+        }
+
+        function toggleItem(id) {
+            const idx = collected.indexOf(id);
+            if (idx > -1) collected.splice(idx, 1); else collected.push(id);
+            localStorage.setItem('eft_kappa_v6', JSON.stringify(collected));
+            renderGrid();
+        }
+
+        function showDetail(id, e) {
+            e.stopPropagation();
+            const item = items.find(i => i.id === id);
+            document.getElementById('modal-img').src = wikiBase + item.icon;
+            document.getElementById('modal-name').innerText = item.name;
+            document.getElementById('modal-spawn').innerText = "主要出現場所: " + item.spawn;
+            document.getElementById('detail-modal').classList.replace('hidden', 'flex');
+        }
+
+        function closeModal() { document.getElementById('detail-modal').classList.replace('flex', 'hidden'); }
+
+        function generateNewKey() {
+            const key = 'KAPPA-' + Math.random().toString(36).substr(2, 4).toUpperCase() + '-' + Math.random().toString(36).substr(2, 4).toUpperCase();
+            document.getElementById('key-input').value = key;
+        }
+
+        async function syncData(mode) {
+            const key = document.getElementById('key-input').value.toUpperCase();
+            if (!key |
+
+| key.length < 5) { alert("合言葉を正しく入力してください"); return; }
+            const status = document.getElementById('status-message');
+            status.innerText = mode === 'save'? "同期中..." : "読み込み中...";
+            status.classList.remove('hidden', 'text-emerald-500', 'text-red-500');
+
+            try {
+                if (mode === 'save') {
+                    const { error } = await supabase.from('sync_data').upsert({ id: key, collected: collected });
+                    if (error) throw error;
+                    status.innerText = "同期成功！クラウドに保存しました。";
+                    status.classList.add('text-emerald-500');
+                } else {
+                    const { data, error } = await supabase.from('sync_data').select('collected').eq('id', key).single();
+                    if (error ||!data) throw new Error("合言葉が見つからないか、データが空です");
+                    collected = data.collected;
+                    localStorage.setItem('eft_kappa_v6', JSON.stringify(collected));
+                    renderGrid();
+                    status.innerText = "読み込み成功！進捗を復元しました。";
+                    status.classList.add('text-emerald-500');
+                }
+                document.body.classList.add('logged-in');
+            } catch (e) {
+                status.innerText = "エラー: " + e.message;
+                status.classList.add('text-red-500');
+            }
+        }
+
+        renderGrid();
+    </script>
+</body>
+</html>
