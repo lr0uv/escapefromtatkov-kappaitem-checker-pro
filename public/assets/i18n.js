@@ -49,6 +49,11 @@ export const T = {
     ogDesc: '登録不要。コレクター任務の納品アイテムをチェックして、合言葉でPCとスマホを同期。',
     langLabel: '表示言語',
     delivered: '納品済み', leftLead: '個のアイテムが\nまだ見つかっていません。', leftDone: 'すべて納品済みです。\nおつかれさまでした。',
+    reqTitle: '解放条件チェック', reqLead: 'コレクターの受注に必要な条件です。満たしたものをタップして記録できます。',
+    reqGroupBase: 'レベル・トレーダー', reqGroupTasks: '先に完了するタスク', reqLevel: 'PMCレベル {n} 以上', reqTrader: '{name} LL{n}',
+    reqTaskSub: '{trader} · Lv{n}〜', reqItems: 'コレクターの納品アイテム', reqWiki: 'Wikiでタスクを見る',
+    completeLeadReqs: '解放条件の残りはあと{n}件です。',
+    privacy: 'プライバシーポリシー', contact: 'ご意見・不具合の報告',
   },
   en: {
     title: 'Kappa Checker', subtitle: 'Collector item progress tracker',
@@ -99,5 +104,10 @@ export const T = {
     ogDesc: 'No sign-up. Check off Collector quest items and sync your PC and phone with a secret key.',
     langLabel: 'Language',
     delivered: 'delivered', leftLead: 'items still\nto be found.', leftDone: 'Everything is\nhanded in.',
+    reqTitle: 'Requirements', reqLead: 'What you need before Collector. Tap each one you have met to track it.',
+    reqGroupBase: 'Level & traders', reqGroupTasks: 'Tasks to finish first', reqLevel: 'PMC level {n}+', reqTrader: '{name} LL{n}',
+    reqTaskSub: '{trader} · Lv{n}+', reqItems: 'Collector items', reqWiki: 'Open task on wiki',
+    completeLeadReqs: '{n} requirements left to go.',
+    privacy: 'Privacy policy', contact: 'Feedback & bug reports',
   },
 };

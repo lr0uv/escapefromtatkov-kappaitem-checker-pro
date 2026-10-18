@@ -93,6 +93,15 @@
       </div>
       <button id="share-x" class="btn primary block" type="button" data-i18n="shareX">進捗をXにポスト</button>
 
+      <details id="reqs" class="reqs" hidden>
+        <summary>
+          <span class="reqs-title"><span class="label">KAPPA</span><span data-i18n="reqTitle">解放条件チェック</span></span>
+          <span id="reqs-count" class="mono"></span>
+        </summary>
+        <p class="reqs-lead" data-i18n="reqLead">コレクターの受注に必要な条件です。満たしたものをタップして記録できます。</p>
+        <ul id="reqs-list" class="reqs-list"></ul>
+      </details>
+
       <section id="guide" class="guide" hidden>
         <div class="guide-head"><span class="label" data-i18n="guideTitle">使い方</span><button id="guide-close" class="link" type="button" data-i18n="guideClose">閉じる</button></div>
         <ol>
@@ -118,7 +127,7 @@
 
       <section id="complete" class="complete" hidden>
         <strong data-i18n="completeTitle">コレクター納品コンプリート！</strong>
-        <span data-i18n="completeLead">Kappaコンテナまであと少しです。</span>
+        <span id="complete-lead"></span>
       </section>
 
       <div class="toolbar">
@@ -192,6 +201,7 @@
 
       <footer class="foot">
         <p><span data-i18n="dataBy">データ提供</span>: <a href="https://tarkov.dev/" target="_blank" rel="noopener">tarkov.dev</a> · <span data-i18n="updated">一覧の更新</span>: <span id="data-updated">-</span></p>
+        <p><a id="privacy-link" href="/privacy.html" data-i18n="privacy">プライバシーポリシー</a> · <a href="https://github.com/lr0uv/escapefromtatkov-kappaitem-checker-pro/issues" target="_blank" rel="noopener" data-i18n="contact">ご意見・不具合の報告</a></p>
         <p>Escape from Tarkov is a trademark of Battlestate Games. <span data-i18n="unofficial">本サイトは非公式のファンツールで、Battlestate Gamesとは関係ありません。</span></p>
       </footer>
     </main>

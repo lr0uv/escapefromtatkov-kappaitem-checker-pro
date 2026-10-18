@@ -6,7 +6,8 @@ declare(strict_types=1);
 require __DIR__ . '/lib.php';
 
 $mode = in_array($_GET['mode'] ?? '', ['regular', 'pve', 'pvp-season'], true) ? $_GET['mode'] : 'regular';
-$cacheFile = data_dir() . "/collector-$mode.json";
+// ファイル名の v2 は「Kappa解放条件」を含む形式。形式を変えたら数字を上げて古い保存を使わないようにする
+$cacheFile = data_dir() . "/collector-v2-$mode.json";
 $cached = is_file($cacheFile) ? file_get_contents($cacheFile) : false;
 
 if ($cached !== false && time() - filemtime($cacheFile) < CACHE_TTL) {
@@ -107,6 +108,7 @@ function fetch_collector(string $mode): array {
 
     $nameKey = $task['name'] ?? '';
     return [
+        'requirements' => kappa_requirements($mode, $task, $tasks, $taskNames),
         'mode' => $mode,
         'updatedAt' => time(),
         'task' => ['id' => $task['id'], 'name' => [
@@ -115,4 +117,43 @@ function fetch_collector(string $mode): array {
         ]],
         'items' => array_values($items),
     ];
+}
+
+// Kappaを受け取るための条件：PMCレベル・トレーダーのロイヤリティレベル・先に終わらせるタスク
+// データの一部が取れなくてもアイテム一覧は返したいので、失敗したら null にする
+function kappa_requirements(string $mode, array $collector, array $tasks, array $taskNames): ?array {
+    try {
+        $traderNames = ['en' => fetch_json("$mode/traders_en")];
+        try { $traderNames['ja'] = fetch_json("$mode/traders_ja"); } catch (Throwable) { $traderNames['ja'] = $traderNames['en']; }
+        $traderName = fn(string $id) => [
+            'ja' => $traderNames['ja']["$id Nickname"] ?? $traderNames['en']["$id Nickname"] ?? $id,
+            'en' => $traderNames['en']["$id Nickname"] ?? $id,
+        ];
+
+        $traders = [];
+        foreach ($collector['traderRequirements'] ?? [] as $r) {
+            if (($r['requirementType'] ?? '') !== 'level' || !preg_match('/^[a-f0-9]{24}$/', $r['id'] ?? '')) continue;
+            $traders[] = ['id' => $r['id'], 'name' => $traderName((string)$r['trader']), 'level' => (int)$r['value']];
+        }
+
+        // tarkov.dev が「Kappaに必要」と印を付けているタスク（コレクター本体は除く）
+        $list = [];
+        foreach ($tasks as $t) {
+            if (empty($t['kappaRequired']) || ($t['id'] ?? '') === $collector['id'] || !preg_match('/^[a-f0-9]{24}$/', $t['id'] ?? '')) continue;
+            $key = $t['name'] ?? '';
+            $list[] = [
+                'id' => $t['id'],
+                'name' => ['ja' => $taskNames['ja'][$key] ?? $taskNames['en'][$key] ?? $key, 'en' => $taskNames['en'][$key] ?? $key],
+                'trader' => $traderName((string)($t['trader'] ?? '')),
+                'level' => (int)($t['minPlayerLevel'] ?? 0),
+                'wiki' => is_string($t['wikiLink'] ?? null) ? $t['wikiLink'] : null,
+            ];
+        }
+        usort($list, fn($a, $b) => [$a['level'], $a['name']['en']] <=> [$b['level'], $b['name']['en']]);
+
+        return ['level' => (int)($collector['minPlayerLevel'] ?? 0), 'traders' => $traders, 'tasks' => $list];
+    } catch (Throwable $e) {
+        error_log('kcc requirements failed: ' . $e->getMessage());
+        return null;
+    }
 }

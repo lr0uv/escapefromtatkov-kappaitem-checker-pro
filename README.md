@@ -5,13 +5,14 @@ Escape from Tarkov のKappaコンテナ（Fenceのタスク「Collector」）で
 - **アイテム一覧は自動で最新になります。** tarkov.dev のJSON API（json.tarkov.dev）から取得して、サーバーに数時間保存して使い回します。パッチでアイテムが増えても、手作業での追加は不要です。
 - **進捗は PvP／PvE／シーズン で別々に記録します。**
 - **個人情報は持ちません。** 進捗はまずブラウザに保存します。別の端末と同期したいときだけ「合言葉」を発行します。合言葉はQRコードやリンクで別の端末に渡せます。
-- 閲覧専用の共有リンク、ファイルへのバックアップ、日本語／英語の切り替えに対応しています。
+- **Kappa解放条件（PMCレベル・トレーダーLL・先に終わらせるタスク）もチェックできます。** 条件も tarkov.dev から自動で取得し、アイテムと一緒に同期します。
+- 閲覧専用の共有リンク、ファイルへのバックアップ、日本語／英語の切り替え、オフライン表示（`sw.js`）に対応しています。
 
 ## 仕組み
 
 ```text
 ブラウザ（index.html + assets/app.js）
-  ├─ api/items.php  … json.tarkov.dev から Collector のアイテム名を取得し、アイコンは assets.tarkov.dev を表示（6時間キャッシュ）
+  ├─ api/items.php  … json.tarkov.dev から Collector のアイテム名とKappa解放条件を取得し、アイコンは assets.tarkov.dev を表示（6時間キャッシュ）
   ├─ api/sync.php   … 合言葉で進捗を同期（サーバーには合言葉そのものではなくハッシュだけを保存）
   └─ api/share.php  … 閲覧専用リンクの進捗を返す
 サーバー上の api/_data/ … SQLiteのデータベースとキャッシュ（外から見えないよう .htaccess で保護）
@@ -27,6 +28,9 @@ Escape from Tarkov のKappaコンテナ（Fenceのタスク「Collector」）で
 | `public/` | サーバーにアップロードする中身すべて |
 | `public/assets/app.js` | 画面の動き（チェック、同期、共有など） |
 | `public/assets/style.css` | 見た目 |
+| `public/assets/i18n.js` | 画面の文言（日本語・英語） |
+| `public/sw.js` | オフラインでも前回の画面を表示するための仕組み（サービスワーカー） |
+| `public/privacy.html`, `public/en/privacy.html` | プライバシーポリシー |
 | `public/assets/vendor/qrcode.js` | QRコード生成ライブラリ（qrcode-generator 1.4.4, MIT） |
 | `public/api/*.php` | サーバー側の処理 |
 | `.github/workflows/deploy.yml` | main に反映されたら FTP で自動アップロード（設定したときだけ動く） |
