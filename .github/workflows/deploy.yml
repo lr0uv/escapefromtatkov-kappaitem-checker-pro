@@ -43,11 +43,10 @@ jobs:
       - name: Check live site
         if: env.HAS_FTP == 'true'
         run: |
-          echo "--- tarkov.dev direct ---"
-          curl -sS -m 30 https://api.tarkov.dev/graphql -H 'Content-Type: application/json' \
-            -d '{"query":"{ tasks(lang: ja, gameMode: regular) { normalizedName objectives { type ... on TaskObjectiveItem { items { id name } } } } }"}' \
-            | python3 -c "import json,sys; d=json.load(sys.stdin); t=[x for x in d.get('data',{}).get('tasks',[]) if x['normalizedName']=='collector']; print('errors:', d.get('errors')); print('collector objectives:', len(t[0]['objectives']) if t else 'NOT FOUND')"
+          echo "--- json.tarkov.dev direct ---"
+          curl -sS --compressed -m 30 https://json.tarkov.dev/regular/tasks \
+            | python3 -c "import json,sys; t=json.load(sys.stdin)['data']['tasks']; c=[x for x in t.values() if x.get('normalizedName')=='collector']; print('collector objectives:', len(c[0]['objectives']) if c else 'NOT FOUND')"
           echo "--- kappacontainer.com/api/items.php ---"
-          curl -sS -m 60 -w '\nHTTP %{http_code}\n' 'https://kappacontainer.com/api/items.php?mode=regular' | head -c 600
+          for m in regular pve pvp-season; do curl -sS -m 60 -w "\n$m HTTP %{http_code}\n" "https://kappacontainer.com/api/items.php?mode=$m" | head -c 400; echo; done
           echo
           curl -sS -m 30 -o /dev/null -w 'top page HTTP %{http_code}\n' https://kappacontainer.com/

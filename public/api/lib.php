@@ -2,7 +2,7 @@
 // 共通処理：設定・JSON応答・データ保存先・SQLite接続
 declare(strict_types=1);
 
-const TARKOV_API = 'https://api.tarkov.dev/graphql';
+const TARKOV_JSON = 'https://json.tarkov.dev';
 const CACHE_TTL = 6 * 3600;          // アイテム一覧を取り直す間隔（秒）
 const MAX_BODY_BYTES = 64 * 1024;    // 同期で受け付ける最大サイズ
 const PROFILES = ['regular', 'pve', 'season'];

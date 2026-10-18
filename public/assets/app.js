@@ -100,7 +100,7 @@ const state = {
 };
 
 const t = (k) => T[prefs.lang][k] ?? T.ja[k] ?? k;
-const dataMode = (mode) => (mode === 'pve' ? 'pve' : 'regular'); // シーズンはPvPと同じアイテム一覧
+const dataMode = (mode) => ({ pve: 'pve', season: 'pvp-season' }[mode] ?? 'regular'); // tarkov.dev のモード名に変換
 const profiles = () => state.share ?? store.profiles;
 const isFound = (id) => profiles()[prefs.mode]?.[id]?.[0] === 1;
 

@@ -2,7 +2,7 @@
 
 Escape from Tarkov のKappaコンテナ（Fenceのタスク「Collector」）で納品するアイテムを、アカウント登録なしでチェックできるWebアプリです。
 
-- **アイテム一覧は自動で最新になります。** tarkov.dev のAPIから取得して、サーバーに数時間保存して使い回します。パッチでアイテムが増えても、手作業での追加は不要です。
+- **アイテム一覧は自動で最新になります。** tarkov.dev のJSON API（json.tarkov.dev）から取得して、サーバーに数時間保存して使い回します。パッチでアイテムが増えても、手作業での追加は不要です。
 - **進捗は PvP／PvE／シーズン で別々に記録します。**
 - **個人情報は持ちません。** 進捗はまずブラウザに保存します。別の端末と同期したいときだけ「合言葉」を発行します。合言葉はQRコードやリンクで別の端末に渡せます。
 - 閲覧専用の共有リンク、ファイルへのバックアップ、日本語／英語の切り替えに対応しています。
@@ -11,7 +11,7 @@ Escape from Tarkov のKappaコンテナ（Fenceのタスク「Collector」）で
 
 ```text
 ブラウザ（index.html + assets/app.js）
-  ├─ api/items.php  … tarkov.dev から Collector のアイテムとアイコンURLを取得（6時間キャッシュ）
+  ├─ api/items.php  … json.tarkov.dev から Collector のアイテム名を取得し、アイコンは assets.tarkov.dev を表示（6時間キャッシュ）
   ├─ api/sync.php   … 合言葉で進捗を同期（サーバーには合言葉そのものではなくハッシュだけを保存）
   └─ api/share.php  … 閲覧専用リンクの進捗を返す
 サーバー上の api/_data/ … SQLiteのデータベースとキャッシュ（外から見えないよう .htaccess で保護）
