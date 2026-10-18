@@ -3,7 +3,7 @@ export const T = {
   ja: {
     title: 'Kappaチェッカー', subtitle: 'コレクター納品アイテムの進捗管理',
     modeRegular: 'PvP', modePve: 'PvE', modeSeason: 'シーズン',
-    search: 'アイテム名で検索', filterAll: 'すべて', filterMissing: '未所持', filterFound: '所持済', doneLast: '済みを下へ',
+    search: 'アイテム名で検索（英語名もOK）', filterAll: 'すべて', filterMissing: '未所持', filterFound: '所持済', doneLast: '済みを下へ',
     shareViewing: '共有された進捗を閲覧中（閲覧専用）', backToMine: '自分の進捗に戻る',
     syncTitle: '別の端末と同期する',
     syncLead: 'メールもパスワードも不要です。発行した「合言葉」を別の端末で入力すると、同じ進捗が使えます。',
@@ -58,7 +58,7 @@ export const T = {
   en: {
     title: 'Kappa Checker', subtitle: 'Collector item progress tracker',
     modeRegular: 'PvP', modePve: 'PvE', modeSeason: 'Season',
-    search: 'Search items', filterAll: 'All', filterMissing: 'Missing', filterFound: 'Found', doneLast: 'Found last',
+    search: 'Search items (Japanese names work too)', filterAll: 'All', filterMissing: 'Missing', filterFound: 'Found', doneLast: 'Found last',
     shareViewing: 'Viewing shared progress (read-only)', backToMine: 'Back to mine',
     syncTitle: 'Sync with another device',
     syncLead: 'No email or password. Enter your secret key on another device to use the same progress.',

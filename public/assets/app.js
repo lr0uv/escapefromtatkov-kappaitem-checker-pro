@@ -183,17 +183,26 @@ function showNotice(text) {
   $('notice').textContent = text ?? '';
 }
 
+// 検索用に文字をそろえる：全角英数→半角（日本語入力のままでも英語名で探せる）、大文字→小文字、
+// ひらがな→カタカナ、空白や記号は無視（"old fire steel" でも "Old firesteel" に当たる）
+const fold = (s) => (s ?? '').normalize('NFKC').toLowerCase()
+  .replace(/[\u3041-\u3096]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0x60))
+  .replace(/[\s\-_.,'"・()（）\[\]#/]+/g, '');
+
+// 日本語・英語の名前と略称をまとめて検索対象にする（表示言語に関係なくどちらでも当たる）
+const searchText = (item) => (item._search ??= [item.name.ja, item.name.en, item.short.ja, item.short.en].map(fold).join('\n'));
+
 function render() {
-  const q = $('search').value.trim().toLowerCase();
+  // 空白で区切った語はすべて含むものに絞る（"bronze lion" → Bronze lion）
+  const words = $('search').value.split(/[\s\u3000]+/).map(fold).filter(Boolean);
   let list = state.items.map((item) => ({ item, found: isFound(item.id) }));
   const total = list.length;
   const found = list.filter((x) => x.found).length;
 
   if (prefs.filter === 'missing') list = list.filter((x) => !x.found);
   if (prefs.filter === 'found') list = list.filter((x) => x.found);
-  if (q) {
-    list = list.filter(({ item }) => [item.name.ja, item.name.en, item.short.ja, item.short.en]
-      .some((s) => s?.toLowerCase().includes(q)));
+  if (words.length) {
+    list = list.filter(({ item }) => words.every((w) => searchText(item).includes(w)));
   }
   if (prefs.doneLast) list.sort((a, b) => a.found - b.found);
 
