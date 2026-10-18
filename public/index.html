@@ -12,6 +12,8 @@
   <meta property="og:url" content="https://kappacontainer.com/">
   <link rel="canonical" href="https://kappacontainer.com/">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='6' width='26' height='20' rx='3' fill='%23c9a646'/%3E%3Crect x='8' y='11' width='16' height='10' rx='1' fill='%2314161a'/%3E%3C/svg%3E">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="assets/icon.svg">
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -24,16 +26,22 @@
           <p class="sub" data-i18n="subtitle">コレクター納品アイテムの進捗管理</p>
         </div>
       </div>
-      <button id="lang-btn" class="chip" type="button">EN</button>
+      <div class="top-actions">
+        <button id="sync-chip" class="chip sync-chip" type="button" data-state="off"><span class="dot" aria-hidden="true"></span><span id="sync-chip-text" data-i18n="chipOff">同期オフ</span></button>
+        <button id="lang-btn" class="chip" type="button">EN</button>
+      </div>
     </div>
     <div class="wrap">
       <div class="tabs" role="tablist" id="mode-tabs">
-        <button role="tab" data-mode="regular" data-i18n="modeRegular">PvP</button>
-        <button role="tab" data-mode="pve" data-i18n="modePve">PvE</button>
-        <button role="tab" data-mode="season" data-i18n="modeSeason">シーズン</button>
+        <button role="tab" data-mode="regular"><span data-i18n="modeRegular">PvP</span><span class="tab-count" data-count="regular"></span></button>
+        <button role="tab" data-mode="pve"><span data-i18n="modePve">PvE</span><span class="tab-count" data-count="pve"></span></button>
+        <button role="tab" data-mode="season"><span data-i18n="modeSeason">シーズン</span><span class="tab-count" data-count="season"></span></button>
       </div>
       <div class="progress">
-        <div class="progress-text"><strong id="found-count">0</strong> / <span id="total-count">0</span><span id="percent"></span></div>
+        <div class="progress-row">
+          <div class="progress-text"><strong id="found-count">0</strong> / <span id="total-count">0</span><span id="percent"></span><span id="remaining" class="remaining"></span></div>
+          <button id="share-x" class="chip" type="button" data-i18n="shareX">進捗をポスト</button>
+        </div>
         <div class="bar"><div id="bar-fill"></div></div>
       </div>
     </div>
@@ -47,6 +55,23 @@
   </div>
 
   <main class="wrap">
+    <section id="guide" class="guide" hidden>
+      <div>
+        <strong data-i18n="guideTitle">使い方</strong>
+        <ol>
+          <li data-i18n="guide1">見つけて納品したアイテムをタップするとチェックが付きます。</li>
+          <li data-i18n="guide2">進捗はこのブラウザに自動で保存されます。登録は不要です。</li>
+          <li data-i18n="guide3">PCとスマホで同じ進捗を使いたいときは、ページ下の「合言葉」を発行します。</li>
+        </ol>
+      </div>
+      <button id="guide-close" class="chip" type="button" data-i18n="guideClose">閉じる</button>
+    </section>
+
+    <section id="complete" class="complete" hidden>
+      <strong data-i18n="completeTitle">コレクター納品コンプリート！</strong>
+      <span data-i18n="completeLead">Kappaコンテナまであと少しです。</span>
+    </section>
+
     <div class="toolbar">
       <input id="search" type="search" autocomplete="off" data-i18n-placeholder="search" placeholder="アイテム名で検索">
       <div class="seg" id="filter">
@@ -55,6 +80,7 @@
         <button data-filter="found" data-i18n="filterFound">所持済</button>
       </div>
       <label class="check"><input type="checkbox" id="done-last"> <span data-i18n="doneLast">済みを下へ</span></label>
+      <span class="hint small" data-i18n="infoHint">ⓘ でWikiの入手場所を表示</span>
     </div>
 
     <p id="notice" class="notice" hidden></p>
@@ -91,14 +117,15 @@
       <p id="sync-status" class="status"></p>
     </section>
 
-    <section class="panel">
-      <h2 data-i18n="backupTitle">バックアップ</h2>
+    <details class="panel">
+      <summary><h2 data-i18n="backupTitle">バックアップとリセット</h2></summary>
       <p class="muted" data-i18n="backupLead">進捗をファイルに書き出しておくと、合言葉をなくしても戻せます。</p>
       <div class="btn-row">
         <button id="export" class="btn" type="button" data-i18n="export">ファイルに書き出す</button>
         <label class="btn"><span data-i18n="import">ファイルから読み込む</span><input id="import" type="file" accept="application/json" hidden></label>
+        <button id="reset-mode" class="btn ghost danger" type="button" data-i18n="resetMode">このモードのチェックをすべて外す</button>
       </div>
-    </section>
+    </details>
 
     <section class="panel about">
       <h2 data-i18n="aboutTitle">Kappaコンテナとコレクター任務</h2>
