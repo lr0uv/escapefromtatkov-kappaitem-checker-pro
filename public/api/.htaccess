@@ -1,0 +1,4 @@
+# lib.php は直接開けないようにする（他のPHPから読み込むためのファイル）
+<Files "lib.php">
+  Require all denied
+</Files>

@@ -1,0 +1,40 @@
+# main ブランチが更新されたら、public/ の中身をシンクラウドへ FTP で自動アップロードする。
+# リポジトリの Settings → Secrets に FTP_SERVER / FTP_USERNAME / FTP_PASSWORD / FTP_SERVER_DIR を
+# 登録したときだけ動く（未登録なら何もしない）。
+name: Deploy to server
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency: deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      HAS_FTP: ${{ secrets.FTP_SERVER != '' }}
+    steps:
+      - uses: actions/checkout@v4
+        if: env.HAS_FTP == 'true'
+      - name: Check PHP syntax
+        if: env.HAS_FTP == 'true'
+        run: for f in public/api/*.php; do php -l "$f"; done
+      - name: Upload public/ via FTP
+        if: env.HAS_FTP == 'true'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          local-dir: ./public/
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          # サーバー上の進捗データやキャッシュは上書き・削除しない
+          exclude: |
+            **/.git*
+            **/.git*/**
+            api/_data/*.sqlite*
+            api/_data/*.json
+            api/_data/*.lock
