@@ -1,0 +1,10 @@
+{
+  "name": "Kappaチェッカー",
+  "short_name": "Kappa",
+  "description": "タルコフ コレクター納品アイテムの進捗管理",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#14161a",
+  "theme_color": "#14161a",
+  "icons": [{ "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

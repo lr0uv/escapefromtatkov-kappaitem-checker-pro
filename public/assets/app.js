@@ -20,7 +20,7 @@ const T = {
     keyWarn: '合言葉を知っている人は進捗を書き換えられます。人に見せるときは下の「閲覧専用リンク」を使ってください。',
     qrHelp: 'スマホのカメラでこのQRコードを読み取ると、そのまま同期できます。',
     copyShare: '閲覧専用リンクをコピー', syncNow: '今すぐ同期', forget: 'この端末の同期をやめる',
-    backupTitle: 'バックアップ', backupLead: '進捗をファイルに書き出しておくと、合言葉をなくしても戻せます。',
+    backupLead: '進捗をファイルに書き出しておくと、合言葉をなくしても戻せます。',
     export: 'ファイルに書き出す', import: 'ファイルから読み込む',
     aboutTitle: 'Kappaコンテナとコレクター任務',
     about1: 'Kappaコンテナ（Secure container Kappa）は、トレーダーFenceのタスク「Collector（コレクター）」の報酬です。指定のアイテムをすべて「レイド内で見つけた（FIR）」状態で納品する必要があります。',
@@ -38,6 +38,16 @@ const T = {
     copied: 'コピーしました', imported: '読み込みました', importFailed: 'ファイルを読み込めませんでした',
     undo: '元に戻す', checked: 'チェックしました', unchecked: 'チェックを外しました',
     shareFailed: '共有された進捗を読み込めませんでした。',
+    backupTitle: 'バックアップとリセット', resetMode: 'このモードのチェックをすべて外す',
+    confirmReset: 'このモードのチェックをすべて外しますか？（同期中なら他の端末にも反映されます）', resetDone: 'チェックをすべて外しました',
+    remaining: 'あと{n}個', chipOff: '同期オフ', chipOn: '同期オン', chipError: '同期エラー',
+    shareX: '進捗をポスト', shareText: 'タルコフのコレクター納品 {found}/{total}（{pct}%）', shareTextDone: 'タルコフのコレクター納品をコンプリートしました！',
+    guideTitle: '使い方', guideClose: '閉じる',
+    guide1: '見つけて納品したアイテムをタップするとチェックが付きます。',
+    guide2: '進捗はこのブラウザに自動で保存されます。登録は不要です。',
+    guide3: 'PCとスマホで同じ進捗を使いたいときは、ページ下の「合言葉」を発行します。',
+    completeTitle: 'コレクター納品コンプリート！', completeLead: 'おつかれさまでした。Kappaコンテナを受け取りましょう。',
+    infoHint: 'ⓘ でWikiの入手場所を表示', wiki: 'Wikiで見る',
   },
   en: {
     title: 'Kappa Checker', subtitle: 'Collector item progress tracker',
@@ -50,7 +60,7 @@ const T = {
     keyWarn: 'Anyone with this key can change your progress. Use the read-only link when sharing.',
     qrHelp: 'Scan this QR code with your phone camera to sync.',
     copyShare: 'Copy read-only link', syncNow: 'Sync now', forget: 'Stop syncing on this device',
-    backupTitle: 'Backup', backupLead: 'Export your progress to a file so you can restore it even if you lose your key.',
+    backupLead: 'Export your progress to a file so you can restore it even if you lose your key.',
     export: 'Export to file', import: 'Import from file',
     aboutTitle: 'About the Kappa container',
     about1: 'The Secure container Kappa is the reward for Fence\'s "Collector" task. You must hand over every listed item found in raid (FIR).',
@@ -68,6 +78,16 @@ const T = {
     copied: 'Copied', imported: 'Imported', importFailed: 'Could not read the file',
     undo: 'Undo', checked: 'Checked', unchecked: 'Unchecked',
     shareFailed: 'Could not load the shared progress.',
+    backupTitle: 'Backup & reset', resetMode: 'Uncheck everything in this mode',
+    confirmReset: 'Uncheck every item in this mode? (Synced devices will update too.)', resetDone: 'All items unchecked',
+    remaining: '{n} to go', chipOff: 'Sync off', chipOn: 'Synced', chipError: 'Sync error',
+    shareX: 'Share', shareText: 'Tarkov Collector progress {found}/{total} ({pct}%)', shareTextDone: 'I finished the Tarkov Collector task!',
+    guideTitle: 'How to use', guideClose: 'Close',
+    guide1: 'Tap an item once you have handed it in to check it off.',
+    guide2: 'Progress is saved in this browser automatically. No sign-up needed.',
+    guide3: 'To use the same progress on PC and phone, create a secret key at the bottom of the page.',
+    completeTitle: 'Collector complete!', completeLead: 'Well done. Go pick up your Kappa container.',
+    infoHint: 'ⓘ opens the wiki for where to find it', wiki: 'Open wiki',
   },
 };
 
@@ -84,7 +104,7 @@ const storage = {
 };
 
 const prefs = Object.assign(
-  { lang: navigator.language?.startsWith('ja') ? 'ja' : 'en', mode: 'regular', filter: 'all', doneLast: false },
+  { lang: navigator.language?.startsWith('ja') ? 'ja' : 'en', mode: 'regular', filter: 'all', doneLast: true, guideSeen: false },
   storage.get(PREFS_KEY, {}),
 );
 // store.profiles[モード][アイテムID] = [1(所持)|0(未所持), 更新時刻]
@@ -99,7 +119,9 @@ const state = {
   undo: null,
 };
 
-const t = (k) => T[prefs.lang][k] ?? T.ja[k] ?? k;
+const t = (k, vars = {}) => (T[prefs.lang][k] ?? T.ja[k] ?? k).replace(/\{(\w+)\}/g, (_, v) => vars[v] ?? '');
+const MODES = ['regular', 'pve', 'season'];
+const wikiUrl = (item) => `https://escapefromtarkov.fandom.com/wiki/${encodeURIComponent((item.name.en || '').replace(/ /g, '_'))}`;
 const dataMode = (mode) => ({ pve: 'pve', season: 'pvp-season' }[mode] ?? 'regular'); // tarkov.dev のモード名に変換
 const profiles = () => state.share ?? store.profiles;
 const isFound = (id) => profiles()[prefs.mode]?.[id]?.[0] === 1;
@@ -121,7 +143,7 @@ async function loadItems() {
   const cacheKey = ITEMS_CACHE + mode;
   const cached = storage.get(cacheKey, null);
   if (cached) setItems(cached);
-  else showNotice(t('loading'));
+  else { showNotice(t('loading')); showSkeleton(); }
 
   try {
     const res = await fetch(`api/items.php?mode=${mode}`);
@@ -139,6 +161,15 @@ function setItems(data) {
   state.itemsMeta = data;
   $('data-updated').textContent = data.updatedAt ? new Date(data.updatedAt * 1000).toLocaleString(prefs.lang) : '-';
   render();
+}
+
+// 読み込み中は灰色の仮カードを並べて、画面がガタつかないようにする
+function showSkeleton() {
+  $('grid').replaceChildren(...Array.from({ length: 24 }, () => {
+    const li = document.createElement('li');
+    li.className = 'skeleton';
+    return li;
+  }));
 }
 
 function showNotice(text) {
@@ -186,6 +217,16 @@ function render() {
       btn.append(qty);
     }
     li.append(btn);
+    // 入手場所を調べるためのWikiリンク（カード本体のボタンとは別の要素にする）
+    const info = document.createElement('a');
+    info.className = 'info';
+    info.href = wikiUrl(item);
+    info.target = '_blank';
+    info.rel = 'noopener';
+    info.textContent = 'ⓘ';
+    info.title = t('wiki');
+    info.setAttribute('aria-label', `${t('wiki')}: ${item.name[prefs.lang] || item.name.en}`);
+    li.append(info);
     return li;
   }));
 
@@ -195,10 +236,46 @@ function render() {
   $('found-count').textContent = found;
   $('total-count').textContent = total;
   $('percent').textContent = total ? `${Math.round((found / total) * 100)}%` : '';
+  $('remaining').textContent = total && found < total ? t('remaining', { n: total - found }) : '';
+  $('complete').hidden = !total || found < total || !!state.share;
+  $('guide').hidden = prefs.guideSeen || !!state.share;
+  renderTabCounts();
   $('bar-fill').style.width = total ? `${(found / total) * 100}%` : '0';
   document.querySelectorAll('#mode-tabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.mode === prefs.mode)));
   document.querySelectorAll('#filter button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === prefs.filter)));
   $('done-last').checked = prefs.doneLast;
+}
+
+// タブに各モードの進捗（例：12/44）を出す。一覧は各モードの保存済みデータから数える
+function renderTabCounts() {
+  for (const m of MODES) {
+    const el = document.querySelector(`[data-count="${m}"]`);
+    const items = m === prefs.mode ? state.items : storage.get(ITEMS_CACHE + dataMode(m), null)?.items;
+    if (!items?.length) { el.textContent = ''; continue; }
+    const p = profiles()[m] ?? {};
+    el.textContent = `${items.filter((i) => p[i.id]?.[0] === 1).length}/${items.length}`;
+  }
+}
+
+function shareToX() {
+  const total = state.items.length;
+  const found = state.items.filter((i) => isFound(i.id)).length;
+  const pct = total ? Math.round((found / total) * 100) : 0;
+  const text = total && found === total ? t('shareTextDone') : t('shareText', { found, total, pct });
+  const url = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent('https://kappacontainer.com/')}&hashtags=EscapeFromTarkov`;
+  window.open(url, '_blank', 'noopener');
+}
+
+function resetMode() {
+  if (!confirm(t('confirmReset'))) return;
+  const p = (store.profiles[prefs.mode] ??= {});
+  const now = Date.now();
+  // 消すのではなく「未所持」として新しい時刻で記録し、同期先にも外したことが伝わるようにする
+  for (const id of Object.keys(p)) if (p[id][0] === 1) p[id] = [0, now];
+  saveStore();
+  render();
+  scheduleSync();
+  toast(t('resetDone'));
 }
 
 function setFound(id, value) {
@@ -284,6 +361,14 @@ async function sync({ key = store.key, join = false } = {}) {
 function setSyncStatus(text, error = false) {
   $('sync-status').textContent = text;
   $('sync-status').classList.toggle('error', error);
+  renderChip(error);
+}
+
+// ヘッダーの同期チップ：同期の状態がひと目で分かるようにする
+function renderChip(error = $('sync-status').classList.contains('error')) {
+  const st = !store.key ? 'off' : error ? 'error' : 'on';
+  $('sync-chip').dataset.state = st;
+  $('sync-chip-text').textContent = t({ off: 'chipOff', on: 'chipOn', error: 'chipError' }[st]);
 }
 
 const keyLink = () => `${location.origin}${location.pathname}#k=${store.key}`;
@@ -292,6 +377,7 @@ const shareLink = () => `${location.origin}${location.pathname}#s=${store.shareI
 function renderSync() {
   $('sync-off').hidden = !!store.key;
   $('sync-on').hidden = !store.key;
+  renderChip();
   if (!store.key) return;
   $('key-text').textContent = store.key;
   $('copy-share').disabled = !store.shareId;
@@ -415,6 +501,7 @@ function bind() {
     prefs.lang = prefs.lang === 'ja' ? 'en' : 'ja';
     savePrefs();
     applyI18n();
+    renderChip();
     render();
     if (state.itemsMeta) setItems(state.itemsMeta);
   });
@@ -443,6 +530,17 @@ function bind() {
     setSyncStatus('');
   });
   $('export').addEventListener('click', exportFile);
+  $('reset-mode').addEventListener('click', resetMode);
+  $('share-x').addEventListener('click', shareToX);
+  $('sync-chip').addEventListener('click', () => $('sync-panel').scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  $('guide-close').addEventListener('click', () => { prefs.guideSeen = true; savePrefs(); render(); });
+  // 「/」キーで検索欄へ移動（入力中は除く）
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+    e.preventDefault();
+    $('search').focus();
+  });
   $('import').addEventListener('change', (e) => { if (e.target.files[0]) importFile(e.target.files[0]); e.target.value = ''; });
   window.addEventListener('hashchange', handleHash);
   // 他のタブで進捗が変わったら反映する
