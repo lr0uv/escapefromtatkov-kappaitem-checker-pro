@@ -12,6 +12,13 @@ if ($cached !== false && time() - filemtime($cacheFile) < CACHE_TTL) {
     send_items($cached);
 }
 
+// tarkov.dev が落ちているときに、アクセスのたびに問い合わせ続けないよう1分は待つ
+$failFile = data_dir() . "/collector-$mode.failed";
+if (is_file($failFile) && time() - filemtime($failFile) < 60) {
+    if ($cached !== false) send_items($cached);
+    json_out(503, ['error' => 'items_unavailable', 'detail' => file_get_contents($failFile)]);
+}
+
 // 同時に何人もアクセスしても、tarkov.dev へ問い合わせるのは1回だけにする
 $failure = 'busy';
 $lock = fopen(data_dir() . "/collector-$mode.lock", 'c');
@@ -23,6 +30,7 @@ if ($lock && flock($lock, LOCK_EX | LOCK_NB)) {
         send_items($fresh);
     } catch (Throwable $e) {
         $failure = $e->getMessage();
+        file_put_contents($failFile, $failure);
         error_log('kcc items fetch failed: ' . $failure);
     } finally {
         flock($lock, LOCK_UN);
