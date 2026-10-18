@@ -18,9 +18,9 @@ jobs:
           t=load('regular_tasks.json')
           print('tasks top keys', list(t.keys()), list(t['data'].keys()))
           print('translations sample', str(t.get('translations'))[:600])
-          tasks=t['data']['tasks']
+          tasks=list(t['data']['tasks'].values()) if isinstance(t['data']['tasks'],dict) else t['data']['tasks']
           c=[x for x in tasks if x.get('normalizedName')=='collector']
-          print('collector found', len(c))
+          print('collector found', len(c)); print('task dict key sample', list(t['data']['tasks'].keys())[:2] if isinstance(t['data']['tasks'],dict) else '')
           if c:
               s=json.dumps(c[0],ensure_ascii=False)
               print('collector keys', list(c[0].keys()))
@@ -36,7 +36,14 @@ jobs:
           first=it[0] if isinstance(it,list) else list(it.values())[0]
           print('item keys', list(first.keys()))
           print(json.dumps(first,ensure_ascii=False)[:1200])
+          print('items translations', str(i.get('translations'))[:400])
+          if c:
+              ids=[o.get('items') or o.get('item') for o in c[0]['objectives']][:3]; print('obj item refs', ids)
+              ia=i['data']['items']; ia=ia if isinstance(ia,dict) else {x['id']:x for x in ia}
+              for o in c[0]['objectives'][:2]:
+                  ref=(o.get('items') or [o.get('item')])[0]; rid=ref if isinstance(ref,str) else ref.get('id'); print('item', rid, json.dumps(ia.get(rid),ensure_ascii=False)[:500])
+              ja=load('regular_items_ja.json'); k=ia.get(rid,{}).get('name'); print('name key', k, '->', ja.get(k) if isinstance(ja,dict) else None)
           for n in ['pvp-season_tasks.json','pve_tasks.json']:
-              d=load(n); cc=[x for x in d['data']['tasks'] if x.get('normalizedName')=='collector']
+              d=load(n); tt=d['data']['tasks']; tt=list(tt.values()) if isinstance(tt,dict) else tt; cc=[x for x in tt if x.get('normalizedName')=='collector']
               print(n, 'collector objectives', len(cc[0]['objectives']) if cc else None)
           PY
