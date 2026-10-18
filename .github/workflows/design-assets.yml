@@ -8,13 +8,23 @@ jobs:
     steps:
       - run: |
           mkdir out && cd out
-          curl -sS --compressed -m 60 "https://kappacontainer.com/api/items.php?mode=regular" -o items.json
           python3 - <<'PY'
-          import json, urllib.request
-          d = json.load(open('items.json'))
-          for it in d['items']:
-              urllib.request.urlretrieve(it['icon'], it['id'] + '.webp')
-          print(len(d['items']))
+          import json, urllib.request, gzip
+          def get(u):
+              r = urllib.request.urlopen(urllib.request.Request(u, headers={'Accept-Encoding': 'gzip', 'User-Agent': 'kappacontainer'}), timeout=60)
+              b = r.read()
+              return gzip.decompress(b) if r.headers.get('Content-Encoding') == 'gzip' else b
+          tasks = json.loads(get('https://json.tarkov.dev/regular/tasks'))['data']['tasks']
+          col = [t for t in tasks.values() if t.get('normalizedName') == 'collector'][0]
+          ja = json.loads(get('https://json.tarkov.dev/regular/items_ja'))['data']
+          en = json.loads(get('https://json.tarkov.dev/regular/items_en'))['data']
+          out = []
+          for o in col['objectives']:
+              for i in o.get('items', []):
+                  out.append({'id': i, 'ja': ja.get(i + ' Name'), 'en': en.get(i + ' Name'), 'short': en.get(i + ' ShortName')})
+                  open(i + '.webp', 'wb').write(get('https://assets.tarkov.dev/' + i + '-icon.webp'))
+          json.dump(out, open('items.json', 'w'), ensure_ascii=False, indent=1)
+          print(len(out))
           PY
           ls | head
       - uses: actions/upload-artifact@v4
