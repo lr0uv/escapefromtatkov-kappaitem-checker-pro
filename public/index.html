@@ -5,151 +5,164 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Kappaチェッカー｜タルコフ コレクター納品アイテム一覧・進捗管理</title>
   <meta name="description" content="Escape from Tarkov のKappaコンテナ（コレクター任務）の納品アイテムを、登録なしでチェックできる進捗管理ツール。アイテムは自動で最新に更新。PvP・PvE・シーズン別に記録、合言葉で端末間同期。">
-  <meta name="theme-color" content="#14161a">
+  <meta name="theme-color" content="#171913">
   <meta property="og:title" content="Kappaチェッカー｜タルコフ コレクター納品アイテム進捗管理">
   <meta property="og:description" content="登録不要。コレクター任務の納品アイテムをチェックして、合言葉でPCとスマホを同期。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://kappacontainer.com/">
   <link rel="canonical" href="https://kappacontainer.com/">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='6' width='26' height='20' rx='3' fill='%23c9a646'/%3E%3Crect x='8' y='11' width='16' height='10' rx='1' fill='%2314161a'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23171913'/%3E%3Crect x='6' y='6' width='20' height='20' fill='none' stroke='%23c98a3e' stroke-width='2.5'/%3E%3Crect x='12' y='12' width='8' height='8' fill='%23c98a3e'/%3E%3C/svg%3E">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="assets/icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+JP:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
   <header class="top">
-    <div class="wrap top-row">
+    <div class="top-row">
       <div class="brand">
         <span class="brand-mark" aria-hidden="true"></span>
-        <div>
-          <h1 data-i18n="title">Kappaチェッカー</h1>
-          <p class="sub" data-i18n="subtitle">コレクター納品アイテムの進捗管理</p>
-        </div>
+        <h1 data-i18n="title">Kappaチェッカー</h1>
       </div>
-      <div class="top-actions">
-        <button id="sync-chip" class="chip sync-chip" type="button" data-state="off"><span class="dot" aria-hidden="true"></span><span id="sync-chip-text" data-i18n="chipOff">同期オフ</span></button>
-        <button id="lang-btn" class="chip" type="button">EN</button>
-      </div>
-    </div>
-    <div class="wrap">
       <div class="tabs" role="tablist" id="mode-tabs">
         <button role="tab" data-mode="regular"><span data-i18n="modeRegular">PvP</span><span class="tab-count" data-count="regular"></span></button>
         <button role="tab" data-mode="pve"><span data-i18n="modePve">PvE</span><span class="tab-count" data-count="pve"></span></button>
         <button role="tab" data-mode="season"><span data-i18n="modeSeason">シーズン</span><span class="tab-count" data-count="season"></span></button>
       </div>
-      <div class="progress">
-        <div class="progress-row">
-          <div class="progress-text"><strong id="found-count">0</strong> / <span id="total-count">0</span><span id="percent"></span><span id="remaining" class="remaining"></span></div>
-          <button id="share-x" class="chip" type="button" data-i18n="shareX">進捗をポスト</button>
-        </div>
-        <div class="bar"><div id="bar-fill"></div></div>
+      <div class="top-actions">
+        <button id="sync-chip" class="chip sync-chip" type="button" data-state="off"><span class="dot" aria-hidden="true"></span><span id="sync-chip-text" data-i18n="chipOff">同期オフ</span></button>
+        <button id="lang-btn" class="chip mono" type="button">EN</button>
       </div>
     </div>
+    <div class="bar" aria-hidden="true"><div id="bar-fill"></div></div>
   </header>
 
   <div id="share-banner" class="banner" hidden>
-    <div class="wrap banner-row">
+    <div class="banner-row">
       <span data-i18n="shareViewing">共有された進捗を閲覧中（閲覧専用）</span>
       <button id="leave-share" class="chip" type="button" data-i18n="backToMine">自分の進捗に戻る</button>
     </div>
   </div>
 
-  <main class="wrap">
-    <section id="guide" class="guide" hidden>
-      <div>
-        <strong data-i18n="guideTitle">使い方</strong>
+  <div class="layout">
+    <aside class="side">
+      <div class="side-label"><span>REMAINING</span><span id="side-mode"></span></div>
+      <div class="big-row">
+        <span id="remaining-big" class="big">–</span>
+        <span class="big-total">/ <span id="total-count">0</span></span>
+      </div>
+      <p id="remaining-lead" class="lead"></p>
+      <div class="side-progress">
+        <div class="progress-text"><span><strong id="found-count">0</strong> / <span id="total-count-2">0</span> <span data-i18n="delivered">納品済み</span></span><span id="percent" class="mono"></span></div>
+        <div id="ticks" class="ticks" aria-hidden="true"></div>
+      </div>
+      <button id="share-x" class="btn primary block" type="button" data-i18n="shareX">進捗をXにポスト</button>
+
+      <section id="guide" class="guide" hidden>
+        <div class="guide-head"><span class="label" data-i18n="guideTitle">使い方</span><button id="guide-close" class="link" type="button" data-i18n="guideClose">閉じる</button></div>
         <ol>
           <li data-i18n="guide1">見つけて納品したアイテムをタップするとチェックが付きます。</li>
           <li data-i18n="guide2">進捗はこのブラウザに自動で保存されます。登録は不要です。</li>
           <li data-i18n="guide3">PCとスマホで同じ進捗を使いたいときは、ページ下の「合言葉」を発行します。</li>
         </ol>
-      </div>
-      <button id="guide-close" class="chip" type="button" data-i18n="guideClose">閉じる</button>
-    </section>
+      </section>
+    </aside>
 
-    <section id="safety" class="safety" hidden>
-      <div>
-        <strong data-i18n="safetyTitle">進捗はこのブラウザにだけ保存されています</strong>
-        <p data-i18n="safetyLead">ブラウザのデータが消えると進捗も消えます。合言葉を発行しておけば、いつでも別の端末やブラウザで復旧できます。</p>
-        <p id="safety-ios" class="small" data-i18n="safetyIos" hidden>iPhone・iPadのSafariは、7日間開かないとデータを消すことがあります。共有ボタンから「ホーム画面に追加」して使うと消えにくくなります。</p>
-      </div>
-      <div class="btn-row">
-        <button id="safety-issue" class="btn primary" type="button" data-i18n="issueKey">合言葉を発行する</button>
-        <button id="safety-later" class="btn ghost" type="button" data-i18n="later">あとで</button>
-      </div>
-    </section>
-
-    <section id="complete" class="complete" hidden>
-      <strong data-i18n="completeTitle">コレクター納品コンプリート！</strong>
-      <span data-i18n="completeLead">Kappaコンテナまであと少しです。</span>
-    </section>
-
-    <div class="toolbar">
-      <input id="search" type="search" autocomplete="off" data-i18n-placeholder="search" placeholder="アイテム名で検索">
-      <div class="seg" id="filter">
-        <button data-filter="all" data-i18n="filterAll">すべて</button>
-        <button data-filter="missing" data-i18n="filterMissing">未所持</button>
-        <button data-filter="found" data-i18n="filterFound">所持済</button>
-      </div>
-      <label class="check"><input type="checkbox" id="done-last"> <span data-i18n="doneLast">済みを下へ</span></label>
-      <span class="hint small" data-i18n="infoHint">ⓘ でWikiの入手場所を表示</span>
-    </div>
-
-    <p id="notice" class="notice" hidden></p>
-    <ul id="grid" class="grid" aria-live="polite"></ul>
-
-    <section class="panel" id="sync-panel">
-      <h2 data-i18n="syncTitle">別の端末と同期する</h2>
-      <p class="muted" data-i18n="syncLead">メールもパスワードも不要です。発行した「合言葉」を別の端末で入力すると、同じ進捗が使えます。</p>
-
-      <div id="sync-off">
-        <button id="issue-key" class="btn primary" type="button" data-i18n="issueKey">合言葉を発行する</button>
-        <form id="join-form" class="join">
-          <input id="join-input" autocomplete="off" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX">
-          <button class="btn" type="submit" data-i18n="join">入力して同期</button>
-        </form>
-      </div>
-
-      <div id="sync-on" hidden>
-        <div class="key-row">
-          <code id="key-text"></code>
-          <button id="copy-key" class="btn" type="button" data-i18n="copy">コピー</button>
-        </div>
-        <p class="muted small" data-i18n="keyWarn">合言葉を知っている人は進捗を書き換えられます。人に見せるときは下の「閲覧専用リンク」を使ってください。</p>
-        <div class="qr-row">
-          <div id="qr" class="qr" aria-label="QR"></div>
-          <p class="muted small" data-i18n="qrHelp">スマホのカメラでこのQRコードを読み取ると、そのまま同期できます。</p>
+    <main class="main">
+      <section id="safety" class="safety" hidden>
+        <div>
+          <strong data-i18n="safetyTitle">進捗はこのブラウザにだけ保存されています</strong>
+          <p data-i18n="safetyLead">ブラウザのデータが消えると進捗も消えます。合言葉を発行しておけば、いつでも別の端末やブラウザで復旧できます。</p>
+          <p id="safety-ios" class="small" data-i18n="safetyIos" hidden>iPhone・iPadのSafariは、7日間開かないとデータを消すことがあります。共有ボタンから「ホーム画面に追加」して使うと消えにくくなります。</p>
         </div>
         <div class="btn-row">
-          <button id="copy-share" class="btn" type="button" data-i18n="copyShare">閲覧専用リンクをコピー</button>
-          <button id="sync-now" class="btn" type="button" data-i18n="syncNow">今すぐ同期</button>
-          <button id="forget-key" class="btn ghost" type="button" data-i18n="forget">この端末の同期をやめる</button>
+          <button id="safety-issue" class="btn primary" type="button" data-i18n="issueKey">合言葉を発行する</button>
+          <button id="safety-later" class="btn ghost" type="button" data-i18n="later">あとで</button>
         </div>
+      </section>
+
+      <section id="complete" class="complete" hidden>
+        <strong data-i18n="completeTitle">コレクター納品コンプリート！</strong>
+        <span data-i18n="completeLead">Kappaコンテナまであと少しです。</span>
+      </section>
+
+      <div class="toolbar">
+        <div class="search">
+          <input id="search" type="search" autocomplete="off" data-i18n-placeholder="search" placeholder="アイテム名で検索">
+          <kbd aria-hidden="true">/</kbd>
+        </div>
+        <div class="seg" id="filter">
+          <button data-filter="all" data-i18n="filterAll">すべて</button>
+          <button data-filter="missing" data-i18n="filterMissing">未所持</button>
+          <button data-filter="found" data-i18n="filterFound">所持済</button>
+        </div>
+        <label class="check"><input type="checkbox" id="done-last"> <span data-i18n="doneLast">済みを下へ</span></label>
       </div>
-      <p id="sync-status" class="status"></p>
-    </section>
 
-    <details class="panel">
-      <summary><h2 data-i18n="backupTitle">バックアップとリセット</h2></summary>
-      <p class="muted" data-i18n="backupLead">進捗をファイルに書き出しておくと、合言葉をなくしても戻せます。</p>
-      <div class="btn-row">
-        <button id="export" class="btn" type="button" data-i18n="export">ファイルに書き出す</button>
-        <label class="btn"><span data-i18n="import">ファイルから読み込む</span><input id="import" type="file" accept="application/json" hidden></label>
-        <button id="reset-mode" class="btn ghost danger" type="button" data-i18n="resetMode">このモードのチェックをすべて外す</button>
+      <div class="list-head" aria-hidden="true">
+        <span><span>NO. / ITEM</span><span data-i18n="infoHint">ⓘ でWikiの入手場所を表示</span><span>STATUS</span></span>
+        <span><span>NO. / ITEM</span><span></span><span>STATUS</span></span>
       </div>
-    </details>
+      <p id="notice" class="notice" hidden></p>
+      <ul id="grid" class="grid" aria-live="polite"></ul>
 
-    <section class="panel about">
-      <h2 data-i18n="aboutTitle">Kappaコンテナとコレクター任務</h2>
-      <p data-i18n="about1">Kappaコンテナ（Secure container Kappa）は、トレーダーFenceのタスク「Collector（コレクター）」の報酬です。指定のアイテムをすべて「レイド内で見つけた（FIR）」状態で納品する必要があります。</p>
-      <p data-i18n="about2">このページの一覧は tarkov.dev のデータから自動で取得しているので、パッチでアイテムが増えても自動で反映されます。</p>
-    </section>
-  </main>
+      <div class="panels">
+        <section class="panel" id="sync-panel">
+          <h2 data-i18n="syncTitle">別の端末と同期する</h2>
+          <p class="muted" data-i18n="syncLead">メールもパスワードも不要です。発行した「合言葉」を別の端末で入力すると、同じ進捗が使えます。</p>
 
-  <footer class="wrap foot">
-    <p><span data-i18n="dataBy">データ提供</span>: <a href="https://tarkov.dev/" target="_blank" rel="noopener">tarkov.dev</a> · <span data-i18n="updated">一覧の更新</span>: <span id="data-updated">-</span></p>
-    <p class="small">Escape from Tarkov is a trademark of Battlestate Games. <span data-i18n="unofficial">本サイトは非公式のファンツールで、Battlestate Gamesとは関係ありません。</span></p>
-  </footer>
+          <div id="sync-off">
+            <button id="issue-key" class="btn primary" type="button" data-i18n="issueKey">合言葉を発行する</button>
+            <form id="join-form" class="join">
+              <input id="join-input" autocomplete="off" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX">
+              <button class="btn" type="submit" data-i18n="join">入力して同期</button>
+            </form>
+          </div>
+
+          <div id="sync-on" hidden>
+            <div class="key-row">
+              <code id="key-text"></code>
+              <button id="copy-key" class="btn" type="button" data-i18n="copy">コピー</button>
+            </div>
+            <p class="muted small" data-i18n="keyWarn">合言葉を知っている人は進捗を書き換えられます。人に見せるときは下の「閲覧専用リンク」を使ってください。</p>
+            <div class="qr-row">
+              <div id="qr" class="qr" aria-label="QR"></div>
+              <p class="muted small" data-i18n="qrHelp">スマホのカメラでこのQRコードを読み取ると、そのまま同期できます。</p>
+            </div>
+            <div class="btn-row">
+              <button id="copy-share" class="btn" type="button" data-i18n="copyShare">閲覧専用リンクをコピー</button>
+              <button id="sync-now" class="btn" type="button" data-i18n="syncNow">今すぐ同期</button>
+              <button id="forget-key" class="btn ghost" type="button" data-i18n="forget">この端末の同期をやめる</button>
+            </div>
+          </div>
+          <p id="sync-status" class="status"></p>
+        </section>
+
+        <details class="panel">
+          <summary><h2 data-i18n="backupTitle">バックアップとリセット</h2></summary>
+          <p class="muted" data-i18n="backupLead">進捗をファイルに書き出しておくと、合言葉をなくしても戻せます。</p>
+          <div class="btn-row">
+            <button id="export" class="btn" type="button" data-i18n="export">ファイルに書き出す</button>
+            <label class="btn"><span data-i18n="import">ファイルから読み込む</span><input id="import" type="file" accept="application/json" hidden></label>
+            <button id="reset-mode" class="btn ghost danger" type="button" data-i18n="resetMode">このモードのチェックをすべて外す</button>
+          </div>
+        </details>
+      </div>
+
+      <section class="about">
+        <h2 data-i18n="aboutTitle">Kappaコンテナとコレクター任務</h2>
+        <p data-i18n="about1">Kappaコンテナ（Secure container Kappa）は、トレーダーFenceのタスク「Collector（コレクター）」の報酬です。指定のアイテムをすべて「レイド内で見つけた（FIR）」状態で納品する必要があります。</p>
+        <p data-i18n="about2">このページの一覧は tarkov.dev のデータから自動で取得しているので、パッチでアイテムが増えても自動で反映されます。</p>
+      </section>
+
+      <footer class="foot">
+        <p><span data-i18n="dataBy">データ提供</span>: <a href="https://tarkov.dev/" target="_blank" rel="noopener">tarkov.dev</a> · <span data-i18n="updated">一覧の更新</span>: <span id="data-updated">-</span></p>
+        <p>Escape from Tarkov is a trademark of Battlestate Games. <span data-i18n="unofficial">本サイトは非公式のファンツールで、Battlestate Gamesとは関係ありません。</span></p>
+      </footer>
+    </main>
+  </div>
 
   <div id="toast" class="toast" role="status" hidden></div>
   <script type="module" src="assets/app.js"></script>

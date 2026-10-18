@@ -41,7 +41,7 @@ const T = {
     backupTitle: 'バックアップとリセット', resetMode: 'このモードのチェックをすべて外す',
     confirmReset: 'このモードのチェックをすべて外しますか？（同期中なら他の端末にも反映されます）', resetDone: 'チェックをすべて外しました',
     remaining: 'あと{n}個', chipOff: '同期オフ', chipOn: '同期オン', chipError: '同期エラー',
-    shareX: '進捗をポスト', shareText: 'タルコフのコレクター納品 {found}/{total}（{pct}%）', shareTextDone: 'タルコフのコレクター納品をコンプリートしました！',
+    shareX: '進捗をXにポスト', shareText: 'タルコフのコレクター納品 {found}/{total}（{pct}%）', shareTextDone: 'タルコフのコレクター納品をコンプリートしました！',
     guideTitle: '使い方', guideClose: '閉じる',
     guide1: '見つけて納品したアイテムをタップするとチェックが付きます。',
     guide2: '進捗はこのブラウザに自動で保存されます。登録は不要です。',
@@ -52,6 +52,7 @@ const T = {
     safetyLead: 'ブラウザのデータが消えると進捗も消えます。合言葉を発行しておけば、いつでも別の端末やブラウザで復旧できます。',
     safetyIos: 'iPhone・iPadのSafariは、7日間開かないとデータを消すことがあります。共有ボタンから「ホーム画面に追加」して使うと消えにくくなります。',
     later: 'あとで', restored: '保存しておいた進捗を復元しました',
+    delivered: '納品済み', leftLead: '個のアイテムが\nまだ見つかっていません。', leftDone: 'すべて納品済みです。\nおつかれさまでした。',
   },
   en: {
     title: 'Kappa Checker', subtitle: 'Collector item progress tracker',
@@ -85,7 +86,7 @@ const T = {
     backupTitle: 'Backup & reset', resetMode: 'Uncheck everything in this mode',
     confirmReset: 'Uncheck every item in this mode? (Synced devices will update too.)', resetDone: 'All items unchecked',
     remaining: '{n} to go', chipOff: 'Sync off', chipOn: 'Synced', chipError: 'Sync error',
-    shareX: 'Share', shareText: 'Tarkov Collector progress {found}/{total} ({pct}%)', shareTextDone: 'I finished the Tarkov Collector task!',
+    shareX: 'Post on X', shareText: 'Tarkov Collector progress {found}/{total} ({pct}%)', shareTextDone: 'I finished the Tarkov Collector task!',
     guideTitle: 'How to use', guideClose: 'Close',
     guide1: 'Tap an item once you have handed it in to check it off.',
     guide2: 'Progress is saved in this browser automatically. No sign-up needed.',
@@ -96,6 +97,7 @@ const T = {
     safetyLead: 'If the browser data is cleared, your progress goes with it. Create a secret key to restore it on any device or browser.',
     safetyIos: 'Safari on iPhone/iPad may delete site data after 7 days without a visit. Use Share > Add to Home Screen to keep it safer.',
     later: 'Later', restored: 'Restored your saved progress',
+    delivered: 'delivered', leftLead: 'items still\nto be found.', leftDone: 'Everything is\nhanded in.',
   },
 };
 
@@ -273,11 +275,14 @@ function render() {
   if (prefs.doneLast) list.sort((a, b) => a.found - b.found);
 
   const grid = $('grid');
-  grid.replaceChildren(...list.map(({ item, found: f }) => {
+  grid.replaceChildren(...list.map(({ item, found: f }, i) => {
     const li = document.createElement('li');
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'item' + (f ? ' found' : '');
+    const no = document.createElement('span');
+    no.className = 'no';
+    no.textContent = String(i + 1).padStart(2, '0');
     btn.dataset.id = item.id;
     btn.setAttribute('aria-pressed', String(f));
     btn.disabled = !!state.share;
@@ -285,18 +290,22 @@ function render() {
     img.src = item.icon;
     img.alt = '';
     img.loading = 'lazy';
-    img.width = 64;
-    img.height = 64;
+    img.width = 38;
+    img.height = 38;
     const name = document.createElement('span');
     name.className = 'name';
     name.textContent = item.name[prefs.lang] || item.name.en;
-    btn.append(img, name);
+    btn.append(no, img, name);
     if (item.count > 1) {
       const qty = document.createElement('span');
       qty.className = 'qty';
       qty.textContent = `×${item.count}`;
       btn.append(qty);
     }
+    const box = document.createElement('span');
+    box.className = 'box';
+    box.setAttribute('aria-hidden', 'true');
+    btn.append(box);
     li.append(btn);
     // 入手場所を調べるためのWikiリンク（カード本体のボタンとは別の要素にする）
     const info = document.createElement('a');
@@ -316,8 +325,12 @@ function render() {
 
   $('found-count').textContent = found;
   $('total-count').textContent = total;
+  $('total-count-2').textContent = total;
   $('percent').textContent = total ? `${Math.round((found / total) * 100)}%` : '';
-  $('remaining').textContent = total && found < total ? t('remaining', { n: total - found }) : '';
+  $('remaining-big').textContent = total ? total - found : '–';
+  $('remaining-lead').textContent = total ? t(found < total ? 'leftLead' : 'leftDone') : '';
+  $('side-mode').textContent = `COLLECTOR · ${t({ regular: 'modeRegular', pve: 'modePve', season: 'modeSeason' }[prefs.mode])}`;
+  renderTicks(total, found);
   $('complete').hidden = !total || found < total || !!state.share;
   $('guide').hidden = prefs.guideSeen || !!state.share;
   renderSafety();
@@ -326,6 +339,15 @@ function render() {
   document.querySelectorAll('#mode-tabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.mode === prefs.mode)));
   document.querySelectorAll('#filter button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === prefs.filter)));
   $('done-last').checked = prefs.doneLast;
+}
+
+// 左列の目盛り：1アイテム＝1本。納品済みの数だけ緑にする
+function renderTicks(total, found) {
+  const el = $('ticks');
+  if (el.childElementCount !== total) {
+    el.replaceChildren(...Array.from({ length: total }, () => document.createElement('span')));
+  }
+  [...el.children].forEach((s, i) => s.classList.toggle('on', i < found));
 }
 
 // タブに各モードの進捗（例：12/44）を出す。一覧は各モードの保存済みデータから数える
