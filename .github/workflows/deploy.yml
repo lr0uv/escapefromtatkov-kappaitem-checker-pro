@@ -39,6 +39,7 @@ jobs:
             api/_data/*.json
             api/_data/*.lock
             api/_data/*.failed
+            api/_data/backups/**
       # アップロード後に本番サイトのアイテムAPIを呼んで、結果をログに残す（失敗の原因を追いやすくするため）
       - name: Check live site
         if: env.HAS_FTP == 'true'

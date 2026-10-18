@@ -48,5 +48,6 @@ if (!$row) {
         ->execute([json_encode($merged), $now, $hash]);
 }
 $pdo->commit();
+backup_daily();
 
 json_out(200, ['key' => $key, 'shareId' => share_id($key), 'profiles' => (object)$merged]);

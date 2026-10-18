@@ -48,6 +48,10 @@ const T = {
     guide3: 'PCとスマホで同じ進捗を使いたいときは、ページ下の「合言葉」を発行します。',
     completeTitle: 'コレクター納品コンプリート！', completeLead: 'おつかれさまでした。Kappaコンテナを受け取りましょう。',
     infoHint: 'ⓘ でWikiの入手場所を表示', wiki: 'Wikiで見る',
+    safetyTitle: '進捗はこのブラウザにだけ保存されています',
+    safetyLead: 'ブラウザのデータが消えると進捗も消えます。合言葉を発行しておけば、いつでも別の端末やブラウザで復旧できます。',
+    safetyIos: 'iPhone・iPadのSafariは、7日間開かないとデータを消すことがあります。共有ボタンから「ホーム画面に追加」して使うと消えにくくなります。',
+    later: 'あとで', restored: '保存しておいた進捗を復元しました',
   },
   en: {
     title: 'Kappa Checker', subtitle: 'Collector item progress tracker',
@@ -88,6 +92,10 @@ const T = {
     guide3: 'To use the same progress on PC and phone, create a secret key at the bottom of the page.',
     completeTitle: 'Collector complete!', completeLead: 'Well done. Go pick up your Kappa container.',
     infoHint: 'ⓘ opens the wiki for where to find it', wiki: 'Open wiki',
+    safetyTitle: 'Your progress is only saved in this browser',
+    safetyLead: 'If the browser data is cleared, your progress goes with it. Create a secret key to restore it on any device or browser.',
+    safetyIos: 'Safari on iPhone/iPad may delete site data after 7 days without a visit. Use Share > Add to Home Screen to keep it safer.',
+    later: 'Later', restored: 'Restored your saved progress',
   },
 };
 
@@ -127,7 +135,80 @@ const profiles = () => state.share ?? store.profiles;
 const isFound = (id) => profiles()[prefs.mode]?.[id]?.[0] === 1;
 
 function savePrefs() { storage.set(PREFS_KEY, prefs); }
-function saveStore() { storage.set(STORE_KEY, store); }
+function saveStore() {
+  storage.set(STORE_KEY, store);
+  idbSet(STORE_KEY, store);
+  requestPersist();
+}
+
+// ---------- 予備の保存先（IndexedDB） ----------
+// localStorage が消えたときのために、同じ内容を別の保存場所にも書いておく
+let idbPromise = null;
+function idbOpen() {
+  idbPromise ??= new Promise((resolve, reject) => {
+    const req = indexedDB.open('kcc', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('kv');
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+  return idbPromise;
+}
+async function idbSet(key, value) {
+  try {
+    const db = await idbOpen();
+    db.transaction('kv', 'readwrite').objectStore('kv').put(structuredClone(value), key);
+  } catch { /* 使えない環境では何もしない */ }
+}
+async function idbGet(key) {
+  try {
+    const db = await idbOpen();
+    return await new Promise((resolve) => {
+      const req = db.transaction('kv').objectStore('kv').get(key);
+      req.onsuccess = () => resolve(req.result ?? null);
+      req.onerror = () => resolve(null);
+    });
+  } catch { return null; }
+}
+
+// 起動時に予備の保存先と見比べ、片方にしか無いチェックや合言葉を取り戻す
+async function restoreFromBackup() {
+  const saved = await idbGet(STORE_KEY);
+  if (saved?.profiles) {
+    const before = JSON.stringify([store.profiles, store.key]);
+    const hadNothing = !hasProgress() && !store.key;
+    store.profiles = mergeProfiles(store.profiles, saved.profiles);
+    if (!store.key && saved.key) { store.key = saved.key; store.shareId = saved.shareId ?? null; }
+    if (JSON.stringify([store.profiles, store.key]) !== before) {
+      storage.set(STORE_KEY, store);
+      render();
+      renderSync();
+      if (hadNothing) toast(t('restored'));
+    }
+  }
+  if (hasProgress() || store.key) idbSet(STORE_KEY, store);
+  requestPersist();
+}
+
+// ブラウザに「このサイトのデータを自動で消さないで」と申請する（認めるかはブラウザ次第）
+let persistAsked = false;
+async function requestPersist() {
+  if (persistAsked || !navigator.storage?.persist || !hasProgress()) return;
+  persistAsked = true;
+  try { if (!(await navigator.storage.persisted())) await navigator.storage.persist(); } catch {}
+}
+
+const foundTotal = () => Object.values(store.profiles).reduce((n, p) => n + Object.values(p ?? {}).filter((e) => e[0] === 1).length, 0);
+const hasProgress = () => foundTotal() > 0;
+const isIos = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isStandalone = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+const SAFETY_SNOOZE = 3 * 24 * 60 * 60 * 1000; // 「あとで」を押したら3日間は出さない
+
+// 合言葉が無いまま進捗がたまってきたら、復旧手段を用意するよう案内する
+function renderSafety() {
+  const show = !state.share && !store.key && foundTotal() >= 3 && Date.now() - (prefs.safetyLaterAt ?? 0) > SAFETY_SNOOZE;
+  $('safety').hidden = !show;
+  $('safety-ios').hidden = !(isIos() && !isStandalone());
+}
 
 // ---------- 画面の文言 ----------
 function applyI18n() {
@@ -239,6 +320,7 @@ function render() {
   $('remaining').textContent = total && found < total ? t('remaining', { n: total - found }) : '';
   $('complete').hidden = !total || found < total || !!state.share;
   $('guide').hidden = prefs.guideSeen || !!state.share;
+  renderSafety();
   renderTabCounts();
   $('bar-fill').style.width = total ? `${(found / total) * 100}%` : '0';
   document.querySelectorAll('#mode-tabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.mode === prefs.mode)));
@@ -378,6 +460,7 @@ function renderSync() {
   $('sync-off').hidden = !!store.key;
   $('sync-on').hidden = !store.key;
   renderChip();
+  renderSafety();
   if (!store.key) return;
   $('key-text').textContent = store.key;
   $('copy-share').disabled = !store.shareId;
@@ -531,6 +614,11 @@ function bind() {
   });
   $('export').addEventListener('click', exportFile);
   $('reset-mode').addEventListener('click', resetMode);
+  $('safety-issue').addEventListener('click', async () => {
+    if (await sync({ key: randomKey() })) $('sync-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    renderSafety();
+  });
+  $('safety-later').addEventListener('click', () => { prefs.safetyLaterAt = Date.now(); savePrefs(); renderSafety(); });
   $('share-x').addEventListener('click', shareToX);
   $('sync-chip').addEventListener('click', () => $('sync-panel').scrollIntoView({ behavior: 'smooth', block: 'start' }));
   $('guide-close').addEventListener('click', () => { prefs.guideSeen = true; savePrefs(); render(); });
@@ -558,4 +646,4 @@ renderSync();
 render();
 loadItems();
 handleHash();
-if (store.key) sync();
+restoreFromBackup().then(() => { if (store.key) sync(); });
