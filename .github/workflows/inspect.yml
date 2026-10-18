@@ -1,0 +1,42 @@
+name: inspect json api
+on:
+  push:
+    branches: [claude/inspect-json]
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          B=https://json.tarkov.dev
+          for p in regular/tasks regular/tasks_ja regular/tasks_en regular/items regular/items_ja regular/items_en pvp-season/tasks pve/tasks; do
+            curl -sS --compressed -m 60 -o "$(echo $p | tr / _).json" -w "$p HTTP %{http_code} size %{size_download}\n" "$B/$p"
+          done
+          ls -la
+          python3 - <<'PY'
+          import json
+          def load(n): return json.load(open(n))
+          t=load('regular_tasks.json')
+          print('tasks top keys', list(t.keys()), list(t['data'].keys()))
+          print('translations sample', str(t.get('translations'))[:600])
+          tasks=t['data']['tasks']
+          c=[x for x in tasks if x.get('normalizedName')=='collector']
+          print('collector found', len(c))
+          if c:
+              s=json.dumps(c[0],ensure_ascii=False)
+              print('collector keys', list(c[0].keys()))
+              print(s[:3000])
+              print('objectives', len(c[0].get('objectives',[])))
+          for n in ['regular_tasks_ja.json','regular_tasks_en.json','regular_items_ja.json']:
+              d=load(n); print(n, type(d).__name__, list(d.keys())[:5] if isinstance(d,dict) else len(d))
+              items=list(d.items())[:1] if isinstance(d,dict) else []
+              print(str(items)[:600])
+          i=load('regular_items.json')
+          print('items top', list(i.keys()), list(i['data'].keys())[:5])
+          it=i['data']['items']
+          first=it[0] if isinstance(it,list) else list(it.values())[0]
+          print('item keys', list(first.keys()))
+          print(json.dumps(first,ensure_ascii=False)[:1200])
+          for n in ['pvp-season_tasks.json','pve_tasks.json']:
+              d=load(n); cc=[x for x in d['data']['tasks'] if x.get('normalizedName')=='collector']
+              print(n, 'collector objectives', len(cc[0]['objectives']) if cc else None)
+          PY
