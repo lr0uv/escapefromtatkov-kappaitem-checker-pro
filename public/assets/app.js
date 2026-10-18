@@ -1,0 +1,463 @@
+// Kappaチェッカー本体。
+// 進捗はまずこの端末（localStorage）に保存し、合言葉があるときだけサーバーと同期する。
+
+const STORE_KEY = 'kcc:v2';
+const PREFS_KEY = 'kcc:prefs';
+const ITEMS_CACHE = 'kcc:items:';
+const SYNC_DELAY = 2500; // チェックしてから同期するまでの待ち時間（連打をまとめて1回にする）
+const KEY_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+const QR_LIB = 'assets/vendor/qrcode.js'; // QRコード生成ライブラリ qrcode-generator 1.4.4（MIT）
+
+const T = {
+  ja: {
+    title: 'Kappaチェッカー', subtitle: 'コレクター納品アイテムの進捗管理',
+    modeRegular: 'PvP', modePve: 'PvE', modeSeason: 'シーズン',
+    search: 'アイテム名で検索', filterAll: 'すべて', filterMissing: '未所持', filterFound: '所持済', doneLast: '済みを下へ',
+    shareViewing: '共有された進捗を閲覧中（閲覧専用）', backToMine: '自分の進捗に戻る',
+    syncTitle: '別の端末と同期する',
+    syncLead: 'メールもパスワードも不要です。発行した「合言葉」を別の端末で入力すると、同じ進捗が使えます。',
+    issueKey: '合言葉を発行する', join: '入力して同期', copy: 'コピー',
+    keyWarn: '合言葉を知っている人は進捗を書き換えられます。人に見せるときは下の「閲覧専用リンク」を使ってください。',
+    qrHelp: 'スマホのカメラでこのQRコードを読み取ると、そのまま同期できます。',
+    copyShare: '閲覧専用リンクをコピー', syncNow: '今すぐ同期', forget: 'この端末の同期をやめる',
+    backupTitle: 'バックアップ', backupLead: '進捗をファイルに書き出しておくと、合言葉をなくしても戻せます。',
+    export: 'ファイルに書き出す', import: 'ファイルから読み込む',
+    aboutTitle: 'Kappaコンテナとコレクター任務',
+    about1: 'Kappaコンテナ（Secure container Kappa）は、トレーダーFenceのタスク「Collector（コレクター）」の報酬です。指定のアイテムをすべて「レイド内で見つけた（FIR）」状態で納品する必要があります。',
+    about2: 'このページの一覧は tarkov.dev のデータから自動で取得しているので、パッチでアイテムが増えても自動で反映されます。',
+    dataBy: 'データ提供', updated: '一覧の更新',
+    unofficial: '本サイトは非公式のファンツールで、Battlestate Gamesとは関係ありません。',
+    loading: 'アイテム一覧を読み込み中…', loadFailed: 'アイテム一覧を読み込めませんでした。時間をおいて再読み込みしてください。',
+    offlineList: '最新の一覧を取得できなかったため、前回の一覧を表示しています。',
+    noMatch: '該当するアイテムはありません。', allDone: 'すべて集まりました！',
+    syncing: '同期中…', synced: '同期しました', syncFailed: '同期できませんでした。進捗はこの端末に保存されています。',
+    badKey: '合言葉の形式が正しくありません（例：AB12-CD34-EF56-GH78-JK90）', notFound: 'その合言葉は見つかりませんでした。',
+    rateLimited: 'アクセスが多すぎます。少し待ってから試してください。',
+    confirmJoin: 'この合言葉で同期しますか？この端末の進捗と合わせて保存されます。',
+    confirmForget: 'この端末から合言葉を削除しますか？（進捗はこの端末に残り、サーバーのデータも消えません）',
+    copied: 'コピーしました', imported: '読み込みました', importFailed: 'ファイルを読み込めませんでした',
+    undo: '元に戻す', checked: 'チェックしました', unchecked: 'チェックを外しました',
+    shareFailed: '共有された進捗を読み込めませんでした。',
+  },
+  en: {
+    title: 'Kappa Checker', subtitle: 'Collector item progress tracker',
+    modeRegular: 'PvP', modePve: 'PvE', modeSeason: 'Season',
+    search: 'Search items', filterAll: 'All', filterMissing: 'Missing', filterFound: 'Found', doneLast: 'Found last',
+    shareViewing: 'Viewing shared progress (read-only)', backToMine: 'Back to mine',
+    syncTitle: 'Sync with another device',
+    syncLead: 'No email or password. Enter your secret key on another device to use the same progress.',
+    issueKey: 'Create secret key', join: 'Enter and sync', copy: 'Copy',
+    keyWarn: 'Anyone with this key can change your progress. Use the read-only link when sharing.',
+    qrHelp: 'Scan this QR code with your phone camera to sync.',
+    copyShare: 'Copy read-only link', syncNow: 'Sync now', forget: 'Stop syncing on this device',
+    backupTitle: 'Backup', backupLead: 'Export your progress to a file so you can restore it even if you lose your key.',
+    export: 'Export to file', import: 'Import from file',
+    aboutTitle: 'About the Kappa container',
+    about1: 'The Secure container Kappa is the reward for Fence\'s "Collector" task. You must hand over every listed item found in raid (FIR).',
+    about2: 'The list is pulled automatically from tarkov.dev, so new items added by patches show up on their own.',
+    dataBy: 'Data', updated: 'List updated',
+    unofficial: 'This is an unofficial fan tool and is not affiliated with Battlestate Games.',
+    loading: 'Loading items…', loadFailed: 'Could not load the item list. Please reload later.',
+    offlineList: 'Showing the last saved list because the latest could not be loaded.',
+    noMatch: 'No matching items.', allDone: 'All items collected!',
+    syncing: 'Syncing…', synced: 'Synced', syncFailed: 'Sync failed. Your progress is saved on this device.',
+    badKey: 'Invalid key format (e.g. AB12-CD34-EF56-GH78-JK90)', notFound: 'That key was not found.',
+    rateLimited: 'Too many requests. Please wait a moment.',
+    confirmJoin: 'Sync with this key? Progress on this device will be merged.',
+    confirmForget: 'Remove the key from this device? (Progress stays here and on the server.)',
+    copied: 'Copied', imported: 'Imported', importFailed: 'Could not read the file',
+    undo: 'Undo', checked: 'Checked', unchecked: 'Unchecked',
+    shareFailed: 'Could not load the shared progress.',
+  },
+};
+
+const $ = (id) => document.getElementById(id);
+
+const storage = {
+  get(key, fallback) {
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; }
+  },
+  set(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* 保存できない環境（プライベートモード等）では無視 */ }
+  },
+  remove(key) { try { localStorage.removeItem(key); } catch {} },
+};
+
+const prefs = Object.assign(
+  { lang: navigator.language?.startsWith('ja') ? 'ja' : 'en', mode: 'regular', filter: 'all', doneLast: false },
+  storage.get(PREFS_KEY, {}),
+);
+// store.profiles[モード][アイテムID] = [1(所持)|0(未所持), 更新時刻]
+const store = Object.assign({ profiles: {}, key: null, shareId: null, lastSync: null }, storage.get(STORE_KEY, {}));
+
+const state = {
+  items: [],
+  itemsMeta: null,
+  share: null,      // 閲覧専用リンクで開いたときの進捗
+  syncTimer: null,
+  syncing: false,
+  undo: null,
+};
+
+const t = (k) => T[prefs.lang][k] ?? T.ja[k] ?? k;
+const dataMode = (mode) => (mode === 'pve' ? 'pve' : 'regular'); // シーズンはPvPと同じアイテム一覧
+const profiles = () => state.share ?? store.profiles;
+const isFound = (id) => profiles()[prefs.mode]?.[id]?.[0] === 1;
+
+function savePrefs() { storage.set(PREFS_KEY, prefs); }
+function saveStore() { storage.set(STORE_KEY, store); }
+
+// ---------- 画面の文言 ----------
+function applyI18n() {
+  document.documentElement.lang = prefs.lang;
+  document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+  $('lang-btn').textContent = prefs.lang === 'ja' ? 'EN' : '日本語';
+}
+
+// ---------- アイテム一覧 ----------
+async function loadItems() {
+  const mode = dataMode(prefs.mode);
+  const cacheKey = ITEMS_CACHE + mode;
+  const cached = storage.get(cacheKey, null);
+  if (cached) setItems(cached);
+  else showNotice(t('loading'));
+
+  try {
+    const res = await fetch(`api/items.php?mode=${mode}`);
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    storage.set(cacheKey, data);
+    if (dataMode(prefs.mode) === mode) { setItems(data); showNotice(null); }
+  } catch {
+    showNotice(cached ? t('offlineList') : t('loadFailed'));
+  }
+}
+
+function setItems(data) {
+  state.items = data.items ?? [];
+  state.itemsMeta = data;
+  $('data-updated').textContent = data.updatedAt ? new Date(data.updatedAt * 1000).toLocaleString(prefs.lang) : '-';
+  render();
+}
+
+function showNotice(text) {
+  $('notice').hidden = !text;
+  $('notice').textContent = text ?? '';
+}
+
+function render() {
+  const q = $('search').value.trim().toLowerCase();
+  let list = state.items.map((item) => ({ item, found: isFound(item.id) }));
+  const total = list.length;
+  const found = list.filter((x) => x.found).length;
+
+  if (prefs.filter === 'missing') list = list.filter((x) => !x.found);
+  if (prefs.filter === 'found') list = list.filter((x) => x.found);
+  if (q) {
+    list = list.filter(({ item }) => [item.name.ja, item.name.en, item.short.ja, item.short.en]
+      .some((s) => s?.toLowerCase().includes(q)));
+  }
+  if (prefs.doneLast) list.sort((a, b) => a.found - b.found);
+
+  const grid = $('grid');
+  grid.replaceChildren(...list.map(({ item, found: f }) => {
+    const li = document.createElement('li');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'item' + (f ? ' found' : '');
+    btn.dataset.id = item.id;
+    btn.setAttribute('aria-pressed', String(f));
+    btn.disabled = !!state.share;
+    const img = document.createElement('img');
+    img.src = item.icon;
+    img.alt = '';
+    img.loading = 'lazy';
+    img.width = 64;
+    img.height = 64;
+    const name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = item.name[prefs.lang] || item.name.en;
+    btn.append(img, name);
+    if (item.count > 1) {
+      const qty = document.createElement('span');
+      qty.className = 'qty';
+      qty.textContent = `×${item.count}`;
+      btn.append(qty);
+    }
+    li.append(btn);
+    return li;
+  }));
+
+  if (total && !list.length) showNotice(found === total && prefs.filter === 'missing' ? t('allDone') : t('noMatch'));
+  else if (total && $('notice').textContent === t('noMatch')) showNotice(null);
+
+  $('found-count').textContent = found;
+  $('total-count').textContent = total;
+  $('percent').textContent = total ? `${Math.round((found / total) * 100)}%` : '';
+  $('bar-fill').style.width = total ? `${(found / total) * 100}%` : '0';
+  document.querySelectorAll('#mode-tabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.mode === prefs.mode)));
+  document.querySelectorAll('#filter button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === prefs.filter)));
+  $('done-last').checked = prefs.doneLast;
+}
+
+function setFound(id, value) {
+  const p = (store.profiles[prefs.mode] ??= {});
+  p[id] = [value ? 1 : 0, Date.now()];
+  saveStore();
+  render();
+  scheduleSync();
+}
+
+function toggle(id) {
+  const before = isFound(id);
+  setFound(id, !before);
+  const item = state.items.find((i) => i.id === id);
+  state.undo = { id, value: before };
+  toast(`${before ? t('unchecked') : t('checked')}：${item?.name[prefs.lang] ?? ''}`, t('undo'), () => setFound(id, before));
+}
+
+// ---------- 同期 ----------
+function randomKey() {
+  const bytes = crypto.getRandomValues(new Uint8Array(20));
+  const s = Array.from(bytes, (b) => KEY_ALPHABET[b % 32]).join('');
+  return s.match(/.{4}/g).join('-');
+}
+
+function normalizeKey(raw) {
+  const s = raw.toUpperCase().replace(/[^0-9A-Z]/g, '').replace(/O/g, '0').replace(/[IL]/g, '1');
+  return /^[0-9A-HJKMNP-TV-Z]{20}$/.test(s) ? s.match(/.{4}/g).join('-') : null;
+}
+
+function mergeProfiles(a, b) {
+  const out = structuredClone(a);
+  for (const [mode, items] of Object.entries(b ?? {})) {
+    for (const [id, entry] of Object.entries(items ?? {})) {
+      const cur = out[mode]?.[id];
+      if (!cur || entry[1] > cur[1]) (out[mode] ??= {})[id] = entry;
+    }
+  }
+  return out;
+}
+
+function scheduleSync() {
+  if (!store.key) return;
+  clearTimeout(state.syncTimer);
+  state.syncTimer = setTimeout(() => sync(), SYNC_DELAY);
+}
+
+async function sync({ key = store.key, join = false } = {}) {
+  if (!key) return false;
+  if (state.syncing) { scheduleSync(); return false; }
+  state.syncing = true;
+  setSyncStatus(t('syncing'));
+  try {
+    const res = await fetch('api/sync.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, join, profiles: store.profiles }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = { bad_key: 'badKey', not_found: 'notFound', rate_limited: 'rateLimited' }[data.error] ?? 'syncFailed';
+      setSyncStatus(t(msg), true);
+      return false;
+    }
+    // 通信中にチェックが変わっていても失われないよう、もう一度合わせる
+    store.profiles = mergeProfiles(data.profiles, store.profiles);
+    store.key = data.key;
+    store.shareId = data.shareId;
+    store.lastSync = Date.now();
+    saveStore();
+    render();
+    renderSync();
+    setSyncStatus(`${t('synced')}（${new Date().toLocaleTimeString(prefs.lang)}）`);
+    return true;
+  } catch {
+    setSyncStatus(t('syncFailed'), true);
+    return false;
+  } finally {
+    state.syncing = false;
+  }
+}
+
+function setSyncStatus(text, error = false) {
+  $('sync-status').textContent = text;
+  $('sync-status').classList.toggle('error', error);
+}
+
+const keyLink = () => `${location.origin}${location.pathname}#k=${store.key}`;
+const shareLink = () => `${location.origin}${location.pathname}#s=${store.shareId}`;
+
+function renderSync() {
+  $('sync-off').hidden = !!store.key;
+  $('sync-on').hidden = !store.key;
+  if (!store.key) return;
+  $('key-text').textContent = store.key;
+  $('copy-share').disabled = !store.shareId;
+  drawQr(keyLink());
+}
+
+let qrLoading = null;
+async function drawQr(text) {
+  try {
+    qrLoading ??= new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = QR_LIB;
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.append(s);
+    });
+    await qrLoading;
+    const qr = window.qrcode(0, 'M');
+    qr.addData(text);
+    qr.make();
+    $('qr').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+  } catch {
+    $('qr').hidden = true;
+  }
+}
+
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); toast(t('copied')); } catch { prompt('', text); }
+}
+
+// ---------- URLの #k=合言葉 / #s=共有ID ----------
+async function handleHash() {
+  const params = new URLSearchParams(location.hash.slice(1));
+  const k = params.get('k');
+  const s = params.get('s');
+  if (k || s) history.replaceState(null, '', location.pathname + location.search);
+
+  if (k) {
+    const key = normalizeKey(k);
+    if (key && key !== store.key && confirm(`${t('confirmJoin')}\n\n${key}`)) {
+      if (await sync({ key, join: true })) toast(t('synced'));
+    }
+  }
+  if (s && /^[a-f0-9]{16}$/.test(s)) {
+    try {
+      const res = await fetch(`api/share.php?id=${s}`);
+      if (!res.ok) throw new Error(res.status);
+      state.share = (await res.json()).profiles ?? {};
+      $('share-banner').hidden = false;
+      render();
+    } catch {
+      toast(t('shareFailed'));
+    }
+  }
+}
+
+// ---------- バックアップ ----------
+function exportFile() {
+  const blob = new Blob([JSON.stringify({ app: 'kappacontainer', version: 2, profiles: store.profiles }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `kappa-progress-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+async function importFile(file) {
+  try {
+    const data = JSON.parse(await file.text());
+    if (!data || typeof data.profiles !== 'object') throw new Error('format');
+    store.profiles = mergeProfiles(store.profiles, data.profiles);
+    saveStore();
+    render();
+    scheduleSync();
+    toast(t('imported'));
+  } catch {
+    toast(t('importFailed'));
+  }
+}
+
+// ---------- 通知 ----------
+let toastTimer = null;
+function toast(text, actionLabel, action) {
+  const el = $('toast');
+  el.replaceChildren(document.createTextNode(text));
+  if (actionLabel) {
+    const b = document.createElement('button');
+    b.textContent = actionLabel;
+    b.onclick = () => { action(); el.hidden = true; };
+    el.append(b);
+  }
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 3500);
+}
+
+// ---------- 操作の受け付け ----------
+function bind() {
+  $('grid').addEventListener('click', (e) => {
+    const btn = e.target.closest('.item');
+    if (btn && !state.share) toggle(btn.dataset.id);
+  });
+  $('mode-tabs').addEventListener('click', (e) => {
+    const mode = e.target.closest('button')?.dataset.mode;
+    if (!mode || mode === prefs.mode) return;
+    const reload = dataMode(mode) !== dataMode(prefs.mode);
+    prefs.mode = mode;
+    savePrefs();
+    if (reload) loadItems(); else render();
+  });
+  $('filter').addEventListener('click', (e) => {
+    const f = e.target.closest('button')?.dataset.filter;
+    if (!f) return;
+    prefs.filter = f;
+    savePrefs();
+    render();
+  });
+  $('done-last').addEventListener('change', (e) => { prefs.doneLast = e.target.checked; savePrefs(); render(); });
+  $('search').addEventListener('input', render);
+  $('lang-btn').addEventListener('click', () => {
+    prefs.lang = prefs.lang === 'ja' ? 'en' : 'ja';
+    savePrefs();
+    applyI18n();
+    render();
+    if (state.itemsMeta) setItems(state.itemsMeta);
+  });
+  $('leave-share').addEventListener('click', () => {
+    state.share = null;
+    $('share-banner').hidden = true;
+    render();
+  });
+
+  $('issue-key').addEventListener('click', () => sync({ key: randomKey() }));
+  $('join-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const key = normalizeKey($('join-input').value);
+    if (!key) { setSyncStatus(t('badKey'), true); return; }
+    if (await sync({ key, join: true })) $('join-input').value = '';
+  });
+  $('copy-key').addEventListener('click', () => copy(store.key));
+  $('copy-share').addEventListener('click', () => copy(shareLink()));
+  $('sync-now').addEventListener('click', () => sync());
+  $('forget-key').addEventListener('click', () => {
+    if (!confirm(t('confirmForget'))) return;
+    store.key = null;
+    store.shareId = null;
+    saveStore();
+    renderSync();
+    setSyncStatus('');
+  });
+  $('export').addEventListener('click', exportFile);
+  $('import').addEventListener('change', (e) => { if (e.target.files[0]) importFile(e.target.files[0]); e.target.value = ''; });
+  window.addEventListener('hashchange', handleHash);
+  // 他のタブで進捗が変わったら反映する
+  window.addEventListener('storage', (e) => {
+    if (e.key !== STORE_KEY) return;
+    Object.assign(store, storage.get(STORE_KEY, {}));
+    render();
+    renderSync();
+  });
+}
+
+applyI18n();
+bind();
+renderSync();
+render();
+loadItems();
+handleHash();
+if (store.key) sync();
