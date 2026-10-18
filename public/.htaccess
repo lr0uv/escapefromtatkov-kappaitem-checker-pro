@@ -1,0 +1,2 @@
+# トップページは index.html を最優先で表示する（古い index.php が残っていても新しい画面を出す）
+DirectoryIndex index.html index.php

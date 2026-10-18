@@ -12,7 +12,15 @@ if ($cached !== false && time() - filemtime($cacheFile) < CACHE_TTL) {
     send_items($cached);
 }
 
+// tarkov.dev が落ちているときに、アクセスのたびに問い合わせ続けないよう1分は待つ
+$failFile = data_dir() . "/collector-$mode.failed";
+if (is_file($failFile) && time() - filemtime($failFile) < 60) {
+    if ($cached !== false) send_items($cached);
+    json_out(503, ['error' => 'items_unavailable', 'detail' => file_get_contents($failFile)]);
+}
+
 // 同時に何人もアクセスしても、tarkov.dev へ問い合わせるのは1回だけにする
+$failure = 'busy';
 $lock = fopen(data_dir() . "/collector-$mode.lock", 'c');
 if ($lock && flock($lock, LOCK_EX | LOCK_NB)) {
     try {
@@ -21,7 +29,9 @@ if ($lock && flock($lock, LOCK_EX | LOCK_NB)) {
         rename($cacheFile . '.tmp', $cacheFile);
         send_items($fresh);
     } catch (Throwable $e) {
-        error_log('kcc items fetch failed: ' . $e->getMessage());
+        $failure = $e->getMessage();
+        file_put_contents($failFile, $failure);
+        error_log('kcc items fetch failed: ' . $failure);
     } finally {
         flock($lock, LOCK_UN);
     }
@@ -31,7 +41,7 @@ if ($lock && flock($lock, LOCK_EX | LOCK_NB)) {
 if ($cached !== false) {
     send_items($cached);
 }
-json_out(503, ['error' => 'items_unavailable']);
+json_out(503, ['error' => 'items_unavailable', 'detail' => $failure]);
 
 function send_items(string $json): never {
     header('Content-Type: application/json; charset=utf-8');
@@ -54,6 +64,7 @@ function graphql(string $query): array {
             CURLOPT_TIMEOUT => 20,
         ]);
         $res = curl_exec($ch);
+        $netError = curl_error($ch);
         curl_close($ch);
     } else {
         $ctx = stream_context_create(['http' => [
@@ -63,10 +74,14 @@ function graphql(string $query): array {
             'timeout' => 20,
         ]]);
         $res = file_get_contents($url, false, $ctx);
+        $netError = error_get_last()['message'] ?? '';
     }
-    if ($res === false) throw new RuntimeException('request failed');
+    if ($res === false || $res === '') throw new RuntimeException('request failed: ' . $netError);
     $json = json_decode($res, true);
-    if (!is_array($json) || !isset($json['data'])) throw new RuntimeException('bad response');
+    if (!is_array($json) || !isset($json['data'])) {
+        $msg = $json['errors'][0]['message'] ?? substr((string)$res, 0, 200);
+        throw new RuntimeException('bad response: ' . $msg);
+    }
     return $json['data'];
 }
 
