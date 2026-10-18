@@ -2,10 +2,14 @@ name: Fetch design assets (temporary)
 on:
   push:
     branches: [claude/design-assets]
+permissions:
+  contents: write
 jobs:
   fetch:
+    if: "!contains(github.event.head_commit.message, 'assets-bot')"
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - run: |
           mkdir out && cd out
           python3 - <<'PY'
@@ -27,7 +31,7 @@ jobs:
           print(len(out))
           PY
           ls | head
-      - uses: actions/upload-artifact@v4
-        with:
-          name: design-assets
-          path: out
+      - run: |
+          mkdir -p design-assets && mv out/* design-assets/
+          git config user.name github-actions && git config user.email github-actions@users.noreply.github.com
+          git add design-assets && git commit -m "assets-bot: design icons" && git push
