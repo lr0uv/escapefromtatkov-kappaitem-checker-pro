@@ -4,7 +4,7 @@
   "description": "タルコフ コレクター納品アイテムの進捗管理",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#14161a",
-  "theme_color": "#14161a",
+  "background_color": "#1b1d17",
+  "theme_color": "#171913",
   "icons": [{ "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
 }
