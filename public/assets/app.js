@@ -678,6 +678,13 @@ function bind() {
   });
 }
 
+// 英語で表示すると決まったら、URLも /en/ にそろえる（再読み込みはしない）。
+// こうしておくと、その人がリンクを共有したときに相手にも英語ページが届く。
+// 検索エンジンのクローラーは index.html の先頭で日本語のままにしているので、ここには来ない
+if (document.documentElement.dataset.pageLang === 'ja' && prefs.lang === 'en' && location.pathname === '/') {
+  history.replaceState(null, '', '/en/' + location.search + location.hash);
+}
+
 applyI18n();
 bind();
 renderSync();
