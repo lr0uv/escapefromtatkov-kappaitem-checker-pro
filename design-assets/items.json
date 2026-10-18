@@ -1,0 +1,266 @@
+[
+ {
+  "id": "5bc9c1e2d4351e00367fbcf0",
+  "ja": "アンティークの斧",
+  "en": "Antique axe",
+  "short": "Axe"
+ },
+ {
+  "id": "5bc9c049d4351e44f824d360",
+  "ja": "アンティークの本",
+  "en": "Battered antique book",
+  "short": "Book"
+ },
+ {
+  "id": "5bc9b355d4351e6d1509862a",
+  "ja": "#FireKlean ガンオイル",
+  "en": "#FireKlean gun lube",
+  "short": "#FireKlean"
+ },
+ {
+  "id": "5bc9bdb8d4351e003562b8a1",
+  "ja": "シルバーバッジ",
+  "en": "Silver Badge",
+  "short": "Badge"
+ },
+ {
+  "id": "5bc9b9ecd4351e3bac122519",
+  "ja": "Deadlyslob の髭オイル",
+  "en": "Deadlyslob's beard oil",
+  "short": "BeardOil"
+ },
+ {
+  "id": "5bc9b720d4351e450201234b",
+  "ja": "1GPhone オレンジゴールド",
+  "en": "Golden 1GPhone smartphone",
+  "short": "1GPhone"
+ },
+ {
+  "id": "5bd073a586f7747e6f135799",
+  "ja": "付け髭",
+  "en": "Fake mustache",
+  "short": "Mustache"
+ },
+ {
+  "id": "5e54f62086f774219b0f1937",
+  "ja": "カラスの置物",
+  "en": "Raven figurine",
+  "short": "Raven"
+ },
+ {
+  "id": "5e54f79686f7744022011103",
+  "ja": "Pestily ペストマスク",
+  "en": "Pestily plague mask",
+  "short": "Plague mask"
+ },
+ {
+  "id": "5e54f76986f7740366043752",
+  "ja": "Shroud ハーフマスク",
+  "en": "Shroud half-mask",
+  "short": "Shroud"
+ },
+ {
+  "id": "5e54f6af86f7742199090bf3",
+  "ja": "Dr. Lupo's コーヒー豆",
+  "en": "Can of Dr. Lupo's coffee beans",
+  "short": "DrLupo's"
+ },
+ {
+  "id": "5bc9be8fd4351e00334cae6e",
+  "ja": "42 シグニチャーブレンド 英国紅茶",
+  "en": "42 Signature Blend English Tea",
+  "short": "42"
+ },
+ {
+  "id": "5f745ee30acaeb0d490d8c5b",
+  "ja": "Veritas ギターピック",
+  "en": "Veritas guitar pick",
+  "short": "Veritas"
+ },
+ {
+  "id": "69f9d60b5de6674f08060f2a",
+  "ja": "Dunduk のフロッピーディスク",
+  "en": "Dunduk floppy disk",
+  "short": "Dunduk"
+ },
+ {
+  "id": "60b0f93284c20f0feb453da7",
+  "ja": "ラットコーラ",
+  "en": "Can of RatCola soda",
+  "short": "RatCola"
+ },
+ {
+  "id": "69398e94ca94fd2877039504",
+  "ja": "Nut Sack バラクラバ",
+  "en": "Nut Sack balaclava",
+  "short": "Nut Sack"
+ },
+ {
+  "id": "69f9d547b98cc4120608692a",
+  "ja": "DesmondPilak CD",
+  "en": "DesmondPilak CD",
+  "short": "Desmond"
+ },
+ {
+  "id": "6937edb912d456a817083e82",
+  "ja": "Mazoni ゴールデンダンベル",
+  "en": "Mazoni golden dumbbell",
+  "short": "Mazoni"
+ },
+ {
+  "id": "69f9d319c906cd16da03b374",
+  "ja": "SheefGG の貯金箱",
+  "en": "SheefGG piggy bank",
+  "short": "SheefGG"
+ },
+ {
+  "id": "60b0f7057897d47c5b04ab94",
+  "ja": "ルートロードのぬいぐるみ",
+  "en": "Loot Lord plushie",
+  "short": "Loot Lord"
+ },
+ {
+  "id": "6937ecf8628ee476240c07cb",
+  "ja": "Tigzresq スプリント",
+  "en": "Tigzresq splint",
+  "short": "Tigzresq"
+ },
+ {
+  "id": "6a3532423ec9d7082a05d430",
+  "ja": "GigaBeef の肉の缶詰",
+  "en": "Can of GigaBeef meat",
+  "short": "GigaBeef"
+ },
+ {
+  "id": "5fd8d28367cb5e077335170f",
+  "ja": "Smoke バラクラバ",
+  "en": "Smoke balaclava",
+  "short": "Smoke"
+ },
+ {
+  "id": "6937f02dfd6488bb27024839",
+  "ja": "Domontovich のウシャンカ帽子",
+  "en": "Domontovich ushanka hat",
+  "short": "Domontovich"
+ },
+ {
+  "id": "6a4ce086b5644e9f0a08d08a",
+  "ja": "LM KC-130 エアクラフトモデル",
+  "en": "LM KC-130 model aircraft",
+  "short": "KC-130"
+ },
+ {
+  "id": "6a35322b81d315afe1018ef3",
+  "ja": "フランスパンのバゲット",
+  "en": "French bakery baguette",
+  "short": "Coсaoo_"
+ },
+ {
+  "id": "6a3557f841667bc4bb00fea4",
+  "ja": "YMXC のウォーターボトル",
+  "en": "Bottle of YMXC water",
+  "short": "YMXC"
+ },
+ {
+  "id": "60b0f6c058e0b0481a09ad11",
+  "ja": "WZ ウォレット",
+  "en": "WZ Wallet",
+  "short": "WZ"
+ },
+ {
+  "id": "60b0f561c4449e4cb624c1d7",
+  "ja": "LVNDMARK's 殺鼠剤",
+  "en": "LVNDMARK's rat poison",
+  "short": "Poison"
+ },
+ {
+  "id": "62a09ec84f842e1bd12da3f2",
+  "ja": "Missam のフォークリフトの鍵",
+  "en": "Missam forklift key",
+  "short": "Danex"
+ },
+ {
+  "id": "62a09e974f842e1bd12da3f0",
+  "ja": "映画 \"サイボーグ・キラー\" のビデオ",
+  "en": "Video cassette with the Cyborg Killer movie",
+  "short": "VHS"
+ },
+ {
+  "id": "62a09e73af34e73a266d932a",
+  "ja": "BakeEzy レシピ本",
+  "en": "BakeEzy cook book",
+  "short": "BakeEzy"
+ },
+ {
+  "id": "62a09e410b9d3c46de5b6e78",
+  "ja": "JohnB Liquid DNB グラス",
+  "en": "JohnB Liquid DNB glasses",
+  "short": "JohnB"
+ },
+ {
+  "id": "62a09dd4621468534a797ac7",
+  "ja": "Baddie の赤髭",
+  "en": "Baddie's red beard",
+  "short": "Baddie"
+ },
+ {
+  "id": "62a09d79de7ac81993580530",
+  "ja": "DRD ボディアーマー",
+  "en": "DRD body armor",
+  "short": "DRD"
+ },
+ {
+  "id": "62a09d3bcf4a99369e262447",
+  "ja": "Gingy のキーホルダー",
+  "en": "Gingy keychain",
+  "short": "Gingy"
+ },
+ {
+  "id": "62a09cfe4f842e1bd12da3e4",
+  "ja": "ゴールデンエッグ",
+  "en": "Golden egg",
+  "short": "Egg"
+ },
+ {
+  "id": "62a09cb7a04c0c5c6e0a84f8",
+  "ja": "NoiceGuy のプレスカード",
+  "en": "Press pass (issued for NoiceGuy)",
+  "short": "Pass"
+ },
+ {
+  "id": "62a091170b9d3c46de5b6cf2",
+  "ja": "オウムの Axel の置物",
+  "en": "Axel parrot figurine",
+  "short": "Axel"
+ },
+ {
+  "id": "62a08f4c4f842e1bd12d9d62",
+  "ja": "BEAR バディのぬいぐるみ",
+  "en": "BEAR Buddy plush toy",
+  "short": "BEAR Buddy"
+ },
+ {
+  "id": "62a09e08de7ac81993580532",
+  "ja": "Glorious E 軽量防弾マスク",
+  "en": "Glorious E mask",
+  "short": "Glorious E"
+ },
+ {
+  "id": "66b37f114410565a8f6789e2",
+  "ja": "Inseq ガスパイプレンチ",
+  "en": "Inseq gas pipe wrench",
+  "short": "Inseq"
+ },
+ {
+  "id": "66b37eb4acff495a29492407",
+  "ja": "Viibiin スニーカー",
+  "en": "Viibiin sneaker",
+  "short": "Viibiin"
+ },
+ {
+  "id": "66b37ea4c5d72b0277488439",
+  "ja": "Tamatthi のレプリカのクナイ",
+  "en": "Tamatthi kunai knife replica",
+  "short": "Tamatthi"
+ }
+]
