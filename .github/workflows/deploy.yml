@@ -21,6 +21,10 @@ jobs:
       - name: Check PHP syntax
         if: env.HAS_FTP == 'true'
         run: for f in public/api/*.php; do php -l "$f"; done
+      # 英語版ページ（public/en/index.html）を最新の翻訳から作り直す
+      - name: Build English page
+        if: env.HAS_FTP == 'true'
+        run: node tools/build-en.mjs
       - name: Upload public/ via FTP
         if: env.HAS_FTP == 'true'
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
