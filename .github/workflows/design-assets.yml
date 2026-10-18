@@ -1,0 +1,23 @@
+name: Fetch design assets (temporary)
+on:
+  push:
+    branches: [claude/design-assets]
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          mkdir out && cd out
+          curl -sS --compressed -m 60 "https://kappacontainer.com/api/items.php?mode=regular" -o items.json
+          python3 - <<'PY'
+          import json, urllib.request
+          d = json.load(open('items.json'))
+          for it in d['items']:
+              urllib.request.urlretrieve(it['icon'], it['id'] + '.webp')
+          print(len(d['items']))
+          PY
+          ls | head
+      - uses: actions/upload-artifact@v4
+        with:
+          name: design-assets
+          path: out
