@@ -26,6 +26,7 @@ html = html.replace(/(<meta\b[^>]*\bdata-i18n-content="(\w+)"[^>]*?\bcontent=")[
 html = html.replace('<html lang="ja" data-page-lang="ja">', '<html lang="en" data-page-lang="en">');
 html = html.replace('<link rel="canonical" href="https://kappacontainer.com/">', '<link rel="canonical" href="https://kappacontainer.com/en/">');
 html = html.replace('<meta property="og:url" content="https://kappacontainer.com/">', '<meta property="og:url" content="https://kappacontainer.com/en/">\n  <meta property="og:locale" content="en_US">');
+html = html.replace('href="/privacy.html"', 'href="/en/privacy.html"');
 html = html.replace('<!doctype html>', '<!doctype html>\n<!-- このファイルは tools/build-en.mjs が自動で作ります。直接編集しないでください。 -->');
 
 const left = html.match(/data-i18n="(\w+)"[^>]*>[^<]*[぀-ヿ一-鿿]/g);

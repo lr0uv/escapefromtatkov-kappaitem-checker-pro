@@ -95,6 +95,15 @@
       </div>
       <button id="share-x" class="btn primary block" type="button" data-i18n="shareX">Post on X</button>
 
+      <details id="reqs" class="reqs" hidden>
+        <summary>
+          <span class="reqs-title"><span class="label">KAPPA</span><span data-i18n="reqTitle">Requirements</span></span>
+          <span id="reqs-count" class="mono"></span>
+        </summary>
+        <p class="reqs-lead" data-i18n="reqLead">What you need before Collector. Tap each one you have met to track it.</p>
+        <ul id="reqs-list" class="reqs-list"></ul>
+      </details>
+
       <section id="guide" class="guide" hidden>
         <div class="guide-head"><span class="label" data-i18n="guideTitle">How to use</span><button id="guide-close" class="link" type="button" data-i18n="guideClose">Close</button></div>
         <ol>
@@ -120,7 +129,7 @@
 
       <section id="complete" class="complete" hidden>
         <strong data-i18n="completeTitle">Collector complete!</strong>
-        <span data-i18n="completeLead">Well done. Go pick up your Kappa container.</span>
+        <span id="complete-lead"></span>
       </section>
 
       <div class="toolbar">
@@ -194,6 +203,7 @@
 
       <footer class="foot">
         <p><span data-i18n="dataBy">Data</span>: <a href="https://tarkov.dev/" target="_blank" rel="noopener">tarkov.dev</a> · <span data-i18n="updated">List updated</span>: <span id="data-updated">-</span></p>
+        <p><a id="privacy-link" href="/en/privacy.html" data-i18n="privacy">Privacy policy</a> · <a href="https://github.com/lr0uv/escapefromtatkov-kappaitem-checker-pro/issues" target="_blank" rel="noopener" data-i18n="contact">Feedback &amp; bug reports</a></p>
         <p>Escape from Tarkov is a trademark of Battlestate Games. <span data-i18n="unofficial">This is an unofficial fan tool and is not affiliated with Battlestate Games.</span></p>
       </footer>
     </main>

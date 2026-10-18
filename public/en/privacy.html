@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy policy | Kappa Checker</title>
+  <meta name="description" content="What information Kappa Checker (kappacontainer.com) handles and why.">
+  <meta name="theme-color" content="#171913">
+  <link rel="canonical" href="https://kappacontainer.com/en/privacy.html">
+  <link rel="alternate" hreflang="ja" href="https://kappacontainer.com/privacy.html">
+  <link rel="alternate" hreflang="en" href="https://kappacontainer.com/en/privacy.html">
+  <link rel="alternate" hreflang="x-default" href="https://kappacontainer.com/privacy.html">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23171913'/%3E%3Crect x='6' y='6' width='20' height='20' fill='none' stroke='%23c98a3e' stroke-width='2.5'/%3E%3Crect x='12' y='12' width='8' height='8' fill='%23c98a3e'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="top-row">
+      <a class="brand" href="/en/"><span class="brand-mark" aria-hidden="true"></span><span class="h1">Kappa Checker</span></a>
+      <div class="top-actions"><a class="chip" href="/privacy.html" lang="ja">日本語</a></div>
+    </div>
+  </header>
+  <main class="doc">
+    <h1>Privacy policy</h1>
+    <p class="muted small">Last updated: October 18, 2026</p>
+    <p>Kappa Checker (kappacontainer.com, "this site") is built to work without an account. This page explains what information the site handles and why.</p>
+
+    <h2>1. Data stored on your device</h2>
+    <p>Your checked progress and display settings (mode, filters, language and so on) are stored in your browser (localStorage and IndexedDB). They stay on your device and are never sent to the server unless you create a secret key. This site does not use cookies.</p>
+
+    <h2>2. Data stored on the server when you sync</h2>
+    <ul>
+      <li>Only which items and requirements you checked, and when, is stored. We never receive your name, email address or game account details.</li>
+      <li>The secret key itself is not stored. Progress is looked up by a one-way hash of the key.</li>
+      <li>To protect against server failures, the progress database is copied once a day and the last 7 days of copies are kept.</li>
+    </ul>
+
+    <h2>3. Access records</h2>
+    <ul>
+      <li>To prevent abuse of syncing and share links, IP addresses are turned into a one-way hash and only the number of requests per 10 minutes is counted. These counts are deleted shortly afterwards.</li>
+      <li>Like any web server, our hosting provider (Xserver's Shin Rental Server) keeps standard access logs, such as IP address and browser type.</li>
+    </ul>
+
+    <h2>4. Third-party services</h2>
+    <ul>
+      <li>Fonts are loaded from Google Fonts and item icons from tarkov.dev. When your browser loads them, these services receive your IP address and similar request data.</li>
+      <li>"Post on X" and the wiki links open X (formerly Twitter) or the Escape from Tarkov Wiki only when you click them.</li>
+      <li>This site currently uses no analytics and no ads. If that changes, this page will be updated first.</li>
+    </ul>
+
+    <h2>5. Deleting your data</h2>
+    <ul>
+      <li>Progress on your device is removed when you clear this site's data in your browser.</li>
+      <li>To have your synced progress deleted from the server, contact us below with your read-only share link. <strong>Never post your secret key anywhere public.</strong></li>
+    </ul>
+
+    <h2>6. Contact</h2>
+    <p>Feedback, bug reports and deletion requests are welcome on <a href="https://github.com/lr0uv/escapefromtatkov-kappaitem-checker-pro/issues" target="_blank" rel="noopener">GitHub Issues</a> (posts there are public).</p>
+
+    <p class="muted small">This is an unofficial fan tool and is not affiliated with Battlestate Games. Escape from Tarkov is a trademark of Battlestate Games.</p>
+    <p class="doc-back"><a href="/en/">← Back to Kappa Checker</a></p>
+  </main>
+</body>
+</html>

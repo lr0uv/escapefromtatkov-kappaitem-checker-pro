@@ -7,6 +7,9 @@ const ITEMS_CACHE = 'kcc:items:';
 const SYNC_DELAY = 2500; // チェックしてから同期するまでの待ち時間（連打をまとめて1回にする）
 const KEY_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 const QR_LIB = '/assets/vendor/qrcode.js'; // QRコード生成ライブラリ qrcode-generator 1.4.4（MIT）
+// 解放条件のチェックもアイテムと同じ進捗データに入れて同期する（サーバーは24桁の英数字IDだけを受け付ける）。
+// トレーダーとタスクは tarkov.dev のIDをそのまま使い、レベル条件だけはこの固定IDで記録する
+const LEVEL_KEY = '000000000000000000000042';
 
 import { T } from './i18n.js';
 
@@ -32,6 +35,7 @@ const store = Object.assign({ profiles: {}, key: null, shareId: null, lastSync: 
 const state = {
   items: [],
   itemsMeta: null,
+  reqs: null,       // Kappa解放条件（レベル・トレーダー・タスク）
   share: null,      // 閲覧専用リンクで開いたときの進捗
   syncTimer: null,
   syncing: false,
@@ -133,6 +137,7 @@ function applyI18n() {
   document.querySelectorAll('[data-i18n-aria]').forEach((el) => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
   document.title = t('metaTitle');
   document.querySelector('meta[name="description"]').content = t('metaDesc');
+  $('privacy-link').href = prefs.lang === 'en' ? '/en/privacy.html' : '/privacy.html';
   document.querySelectorAll('#lang-switch button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === prefs.lang)));
   document.documentElement.classList.remove('i18n-wait');
 }
@@ -159,6 +164,7 @@ async function loadItems() {
 function setItems(data) {
   state.items = data.items ?? [];
   state.itemsMeta = data;
+  state.reqs = data.requirements ?? null;
   $('data-updated').textContent = data.updatedAt ? new Date(data.updatedAt * 1000).toLocaleString(prefs.lang) : '-';
   render();
 }
@@ -248,7 +254,9 @@ function render() {
   $('remaining-lead').textContent = total ? t(found < total ? 'leftLead' : 'leftDone') : '';
   $('side-mode').textContent = `COLLECTOR · ${t({ regular: 'modeRegular', pve: 'modePve', season: 'modeSeason' }[prefs.mode])}`;
   renderTicks(total, found);
+  const reqsLeft = renderReqs(total, found);
   $('complete').hidden = !total || found < total || !!state.share;
+  $('complete-lead').textContent = reqsLeft ? t('completeLeadReqs', { n: reqsLeft }) : t('completeLead');
   $('guide').hidden = prefs.guideSeen || !!state.share;
   renderSafety();
   renderTabCounts();
@@ -256,6 +264,82 @@ function render() {
   document.querySelectorAll('#mode-tabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.mode === prefs.mode)));
   document.querySelectorAll('#filter button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === prefs.filter)));
   $('done-last').checked = prefs.doneLast;
+}
+
+// Kappa解放条件のチェックリスト。残っている条件の数を返す
+function reqRows() {
+  const r = state.reqs;
+  if (!r) return [];
+  const name = (n) => n?.[prefs.lang] || n?.en || '';
+  return [
+    { group: t('reqGroupBase') },
+    ...(r.level ? [{ id: LEVEL_KEY, text: t('reqLevel', { n: r.level }) }] : []),
+    ...r.traders.map((x) => ({ id: x.id, text: t('reqTrader', { name: name(x.name), n: x.level }) })),
+    ...(r.tasks.length ? [{ group: t('reqGroupTasks') }] : []),
+    ...r.tasks.map((x) => ({ id: x.id, text: name(x.name), sub: t('reqTaskSub', { trader: name(x.trader), n: x.level }), wiki: x.wiki })),
+  ];
+}
+
+function renderReqs(total, found) {
+  const rows = reqRows();
+  const checks = rows.filter((r) => r.id);
+  $('reqs').hidden = !checks.length;
+  if (!checks.length) return 0;
+  const done = checks.filter((r) => isFound(r.id)).length;
+  $('reqs-count').textContent = `${done}/${checks.length}`;
+  // 最初の1回だけ開閉を決める。本人が開け閉めしたらそれを覚えておき、決めていなければPCは開く・スマホは閉じる
+  if (!state.reqsShown) {
+    state.reqsShown = true;
+    $('reqs').open = prefs.reqsOpen ?? matchMedia('(min-width: 1024px)').matches;
+  }
+
+  const list = rows.map((r) => {
+    const li = document.createElement('li');
+    if (r.group) {
+      li.className = 'req-group';
+      li.textContent = r.group;
+      return li;
+    }
+    const f = isFound(r.id);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'req' + (f ? ' found' : '');
+    btn.dataset.id = r.id;
+    btn.setAttribute('aria-pressed', String(f));
+    btn.disabled = !!state.share;
+    const box = document.createElement('span');
+    box.className = 'box';
+    box.setAttribute('aria-hidden', 'true');
+    const text = document.createElement('span');
+    text.className = 'req-text';
+    text.textContent = r.text;
+    if (r.sub) {
+      const sub = document.createElement('small');
+      sub.textContent = r.sub;
+      text.append(sub);
+    }
+    btn.append(box, text);
+    li.append(btn);
+    if (r.wiki) {
+      const a = document.createElement('a');
+      a.className = 'info';
+      a.href = r.wiki;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = 'ⓘ';
+      a.title = t('reqWiki');
+      a.setAttribute('aria-label', `${t('reqWiki')}: ${r.text}`);
+      li.append(a);
+    }
+    return li;
+  });
+  // 納品アイテムも条件の1つとして最後に並べる（数は一覧から自動で数える）
+  const items = document.createElement('li');
+  items.className = 'req-items' + (total && found === total ? ' found' : '');
+  items.textContent = `${t('reqItems')}  ${found}/${total}`;
+  list.push(items);
+  $('reqs-list').replaceChildren(...list);
+  return checks.length - done;
 }
 
 // 左列の目盛り：1アイテム＝1本。納品済みの数だけ緑にする
@@ -502,6 +586,15 @@ function bind() {
     const btn = e.target.closest('.item');
     if (btn && !state.share) toggle(btn.dataset.id);
   });
+  $('reqs-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('.req');
+    if (btn && !state.share) setFound(btn.dataset.id, !isFound(btn.dataset.id));
+  });
+  // 本人が開け閉めしたときだけ覚えておく（クリックの時点ではまだ切り替わる前なので反対の値を保存する）
+  $('reqs').querySelector('summary').addEventListener('click', () => {
+    prefs.reqsOpen = !$('reqs').open;
+    savePrefs();
+  });
   $('mode-tabs').addEventListener('click', (e) => {
     const mode = e.target.closest('button')?.dataset.mode;
     if (!mode || mode === prefs.mode) return;
@@ -592,3 +685,8 @@ render();
 loadItems();
 handleHash();
 restoreFromBackup().then(() => { if (store.key) sync(); });
+
+// 電波の悪い場所や回線が落ちたときでも、前回開いたページと一覧を表示できるようにする（sw.js）
+if ('serviceWorker' in navigator && window.isSecureContext) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
