@@ -1,0 +1,44 @@
+# 一時的な調査用：json.tarkov.dev のコレクター任務とKappa条件のデータ構造をログに出す（調査後に削除）
+name: Probe tarkov data
+on:
+  push:
+    branches: [claude/probe-data]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for m in regular pve; do curl -sS --compressed -m 60 https://json.tarkov.dev/$m/tasks -o $m.json; done
+          curl -sS --compressed -m 60 https://json.tarkov.dev/regular/tasks_en -o tasks_en.json
+          curl -sS --compressed -m 60 https://json.tarkov.dev/regular/items_en -o items_en.json
+          curl -sS --compressed -m 60 https://json.tarkov.dev/regular/traders -o traders.json || true
+          curl -sS --compressed -m 60 https://json.tarkov.dev/regular/traders_en -o traders_en.json || true
+          python3 - <<'PY'
+          import json
+          en=json.load(open('tasks_en.json'))['data']; it=json.load(open('items_en.json'))['data']
+          for m in ['regular','pve']:
+              d=json.load(open(m+'.json'))['data']
+              print('==',m,'top keys',list(d.keys()))
+              tasks=d['tasks']; vals=list(tasks.values()) if isinstance(tasks,dict) else tasks
+              c=[t for t in vals if t.get('normalizedName')=='collector'][0]
+              print('collector keys', list(c.keys()))
+              obs=c['objectives']; print('objectives', len(obs))
+              from collections import Counter
+              print('types', Counter(o.get('type') for o in obs))
+              multi=[o for o in obs if len(o.get('items') or [])>1]
+              print('multi-item objectives', len(multi))
+              for o in multi[:5]: print('  ', [ (i['id'] if isinstance(i,dict) else i) for i in o['items']], o.get('count'))
+              ids=[ (o['items'][0]['id'] if isinstance(o['items'][0],dict) else o['items'][0]) for o in obs if o.get('items')]
+              print('unique first items', len(set(ids)), 'total', len(ids))
+              for o in obs[:2]: print('  sample obj', json.dumps(o)[:400])
+              for k in ['minPlayerLevel','taskRequirements','traderRequirements','traderLevelRequirements','kappaRequired','lightkeeperRequired','trader','factionName','experience']:
+                  print(' ',k, json.dumps(c.get(k))[:600])
+              kap=[t for t in vals if t.get('kappaRequired')]
+              print('kappaRequired tasks', len(kap))
+              print('  sample', [en.get(t.get('name'), t.get('name')) for t in kap[:15]])
+              print('  task keys sample', list(vals[0].keys()))
+          for f in ['traders.json','traders_en.json']:
+              try:
+                  t=json.load(open(f)); print(f, json.dumps(t)[:800])
+              except Exception as e: print(f,'ERR',e)
+          PY
