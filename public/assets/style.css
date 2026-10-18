@@ -78,6 +78,11 @@ h1 { margin: 0; font: 700 17px/1 var(--display); letter-spacing: .06em; text-tra
 }
 .chip.mono { font: 11px var(--mono); }
 .chip:hover { border-color: var(--line-3); }
+/* 言語の切り替え：今の言語を明るく表示する */
+.lang-switch { display: flex; height: 30px; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.lang-switch button { padding: 0 9px; border: 0; background: var(--surface); color: var(--faint); font: 11px var(--mono); cursor: pointer; }
+.lang-switch button + button { border-left: 1px solid var(--line); }
+.lang-switch button[aria-pressed="true"] { background: var(--line-2); color: var(--text-strong); }
 .sync-chip { display: inline-flex; align-items: center; gap: 8px; }
 .sync-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); }
 .sync-chip[data-state="on"] .dot { background: var(--ok); }

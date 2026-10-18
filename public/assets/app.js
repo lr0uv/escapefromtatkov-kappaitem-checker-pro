@@ -6,100 +6,9 @@ const PREFS_KEY = 'kcc:prefs';
 const ITEMS_CACHE = 'kcc:items:';
 const SYNC_DELAY = 2500; // チェックしてから同期するまでの待ち時間（連打をまとめて1回にする）
 const KEY_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-const QR_LIB = 'assets/vendor/qrcode.js'; // QRコード生成ライブラリ qrcode-generator 1.4.4（MIT）
+const QR_LIB = '/assets/vendor/qrcode.js'; // QRコード生成ライブラリ qrcode-generator 1.4.4（MIT）
 
-const T = {
-  ja: {
-    title: 'Kappaチェッカー', subtitle: 'コレクター納品アイテムの進捗管理',
-    modeRegular: 'PvP', modePve: 'PvE', modeSeason: 'シーズン',
-    search: 'アイテム名で検索', filterAll: 'すべて', filterMissing: '未所持', filterFound: '所持済', doneLast: '済みを下へ',
-    shareViewing: '共有された進捗を閲覧中（閲覧専用）', backToMine: '自分の進捗に戻る',
-    syncTitle: '別の端末と同期する',
-    syncLead: 'メールもパスワードも不要です。発行した「合言葉」を別の端末で入力すると、同じ進捗が使えます。',
-    issueKey: '合言葉を発行する', join: '入力して同期', copy: 'コピー',
-    keyWarn: '合言葉を知っている人は進捗を書き換えられます。人に見せるときは下の「閲覧専用リンク」を使ってください。',
-    qrHelp: 'スマホのカメラでこのQRコードを読み取ると、そのまま同期できます。',
-    copyShare: '閲覧専用リンクをコピー', syncNow: '今すぐ同期', forget: 'この端末の同期をやめる',
-    backupLead: '進捗をファイルに書き出しておくと、合言葉をなくしても戻せます。',
-    export: 'ファイルに書き出す', import: 'ファイルから読み込む',
-    aboutTitle: 'Kappaコンテナとコレクター任務',
-    about1: 'Kappaコンテナ（Secure container Kappa）は、トレーダーFenceのタスク「Collector（コレクター）」の報酬です。指定のアイテムをすべて「レイド内で見つけた（FIR）」状態で納品する必要があります。',
-    about2: 'このページの一覧は tarkov.dev のデータから自動で取得しているので、パッチでアイテムが増えても自動で反映されます。',
-    dataBy: 'データ提供', updated: '一覧の更新',
-    unofficial: '本サイトは非公式のファンツールで、Battlestate Gamesとは関係ありません。',
-    loading: 'アイテム一覧を読み込み中…', loadFailed: 'アイテム一覧を読み込めませんでした。時間をおいて再読み込みしてください。',
-    offlineList: '最新の一覧を取得できなかったため、前回の一覧を表示しています。',
-    noMatch: '該当するアイテムはありません。', allDone: 'すべて集まりました！',
-    syncing: '同期中…', synced: '同期しました', syncFailed: '同期できませんでした。進捗はこの端末に保存されています。',
-    badKey: '合言葉の形式が正しくありません（例：AB12-CD34-EF56-GH78-JK90）', notFound: 'その合言葉は見つかりませんでした。',
-    rateLimited: 'アクセスが多すぎます。少し待ってから試してください。',
-    confirmJoin: 'この合言葉で同期しますか？この端末の進捗と合わせて保存されます。',
-    confirmForget: 'この端末から合言葉を削除しますか？（進捗はこの端末に残り、サーバーのデータも消えません）',
-    copied: 'コピーしました', imported: '読み込みました', importFailed: 'ファイルを読み込めませんでした',
-    undo: '元に戻す', checked: 'チェックしました', unchecked: 'チェックを外しました',
-    shareFailed: '共有された進捗を読み込めませんでした。',
-    backupTitle: 'バックアップとリセット', resetMode: 'このモードのチェックをすべて外す',
-    confirmReset: 'このモードのチェックをすべて外しますか？（同期中なら他の端末にも反映されます）', resetDone: 'チェックをすべて外しました',
-    remaining: 'あと{n}個', chipOff: '同期オフ', chipOn: '同期オン', chipError: '同期エラー',
-    shareX: '進捗をXにポスト', shareText: 'タルコフのコレクター納品 {found}/{total}（{pct}%）', shareTextDone: 'タルコフのコレクター納品をコンプリートしました！',
-    guideTitle: '使い方', guideClose: '閉じる',
-    guide1: '見つけて納品したアイテムをタップするとチェックが付きます。',
-    guide2: '進捗はこのブラウザに自動で保存されます。登録は不要です。',
-    guide3: 'PCとスマホで同じ進捗を使いたいときは、ページ下の「合言葉」を発行します。',
-    completeTitle: 'コレクター納品コンプリート！', completeLead: 'おつかれさまでした。Kappaコンテナを受け取りましょう。',
-    infoHint: 'ⓘ でWikiの入手場所を表示', wiki: 'Wikiで見る',
-    safetyTitle: '進捗はこのブラウザにだけ保存されています',
-    safetyLead: 'ブラウザのデータが消えると進捗も消えます。合言葉を発行しておけば、いつでも別の端末やブラウザで復旧できます。',
-    safetyIos: 'iPhone・iPadのSafariは、7日間開かないとデータを消すことがあります。共有ボタンから「ホーム画面に追加」して使うと消えにくくなります。',
-    later: 'あとで', restored: '保存しておいた進捗を復元しました',
-    delivered: '納品済み', leftLead: '個のアイテムが\nまだ見つかっていません。', leftDone: 'すべて納品済みです。\nおつかれさまでした。',
-  },
-  en: {
-    title: 'Kappa Checker', subtitle: 'Collector item progress tracker',
-    modeRegular: 'PvP', modePve: 'PvE', modeSeason: 'Season',
-    search: 'Search items', filterAll: 'All', filterMissing: 'Missing', filterFound: 'Found', doneLast: 'Found last',
-    shareViewing: 'Viewing shared progress (read-only)', backToMine: 'Back to mine',
-    syncTitle: 'Sync with another device',
-    syncLead: 'No email or password. Enter your secret key on another device to use the same progress.',
-    issueKey: 'Create secret key', join: 'Enter and sync', copy: 'Copy',
-    keyWarn: 'Anyone with this key can change your progress. Use the read-only link when sharing.',
-    qrHelp: 'Scan this QR code with your phone camera to sync.',
-    copyShare: 'Copy read-only link', syncNow: 'Sync now', forget: 'Stop syncing on this device',
-    backupLead: 'Export your progress to a file so you can restore it even if you lose your key.',
-    export: 'Export to file', import: 'Import from file',
-    aboutTitle: 'About the Kappa container',
-    about1: 'The Secure container Kappa is the reward for Fence\'s "Collector" task. You must hand over every listed item found in raid (FIR).',
-    about2: 'The list is pulled automatically from tarkov.dev, so new items added by patches show up on their own.',
-    dataBy: 'Data', updated: 'List updated',
-    unofficial: 'This is an unofficial fan tool and is not affiliated with Battlestate Games.',
-    loading: 'Loading items…', loadFailed: 'Could not load the item list. Please reload later.',
-    offlineList: 'Showing the last saved list because the latest could not be loaded.',
-    noMatch: 'No matching items.', allDone: 'All items collected!',
-    syncing: 'Syncing…', synced: 'Synced', syncFailed: 'Sync failed. Your progress is saved on this device.',
-    badKey: 'Invalid key format (e.g. AB12-CD34-EF56-GH78-JK90)', notFound: 'That key was not found.',
-    rateLimited: 'Too many requests. Please wait a moment.',
-    confirmJoin: 'Sync with this key? Progress on this device will be merged.',
-    confirmForget: 'Remove the key from this device? (Progress stays here and on the server.)',
-    copied: 'Copied', imported: 'Imported', importFailed: 'Could not read the file',
-    undo: 'Undo', checked: 'Checked', unchecked: 'Unchecked',
-    shareFailed: 'Could not load the shared progress.',
-    backupTitle: 'Backup & reset', resetMode: 'Uncheck everything in this mode',
-    confirmReset: 'Uncheck every item in this mode? (Synced devices will update too.)', resetDone: 'All items unchecked',
-    remaining: '{n} to go', chipOff: 'Sync off', chipOn: 'Synced', chipError: 'Sync error',
-    shareX: 'Post on X', shareText: 'Tarkov Collector progress {found}/{total} ({pct}%)', shareTextDone: 'I finished the Tarkov Collector task!',
-    guideTitle: 'How to use', guideClose: 'Close',
-    guide1: 'Tap an item once you have handed it in to check it off.',
-    guide2: 'Progress is saved in this browser automatically. No sign-up needed.',
-    guide3: 'To use the same progress on PC and phone, create a secret key at the bottom of the page.',
-    completeTitle: 'Collector complete!', completeLead: 'Well done. Go pick up your Kappa container.',
-    infoHint: 'ⓘ opens the wiki for where to find it', wiki: 'Open wiki',
-    safetyTitle: 'Your progress is only saved in this browser',
-    safetyLead: 'If the browser data is cleared, your progress goes with it. Create a secret key to restore it on any device or browser.',
-    safetyIos: 'Safari on iPhone/iPad may delete site data after 7 days without a visit. Use Share > Add to Home Screen to keep it safer.',
-    later: 'Later', restored: 'Restored your saved progress',
-    delivered: 'delivered', leftLead: 'items still\nto be found.', leftDone: 'Everything is\nhanded in.',
-  },
-};
+import { T } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -114,7 +23,7 @@ const storage = {
 };
 
 const prefs = Object.assign(
-  { lang: navigator.language?.startsWith('ja') ? 'ja' : 'en', mode: 'regular', filter: 'all', doneLast: true, guideSeen: false },
+  { mode: 'regular', filter: 'all', doneLast: true, guideSeen: false },
   storage.get(PREFS_KEY, {}),
 );
 // store.profiles[モード][アイテムID] = [1(所持)|0(未所持), 更新時刻]
@@ -129,6 +38,9 @@ const state = {
   undo: null,
 };
 
+// 表示言語は index.html の先頭のスクリプトが決める（URL → 本人が選んだ言語 → ブラウザの言語の順）
+prefs.lang = document.documentElement.dataset.lang === 'ja' ? 'ja' : 'en';
+
 const t = (k, vars = {}) => (T[prefs.lang][k] ?? T.ja[k] ?? k).replace(/\{(\w+)\}/g, (_, v) => vars[v] ?? '');
 const MODES = ['regular', 'pve', 'season'];
 const wikiUrl = (item) => `https://escapefromtarkov.fandom.com/wiki/${encodeURIComponent((item.name.en || '').replace(/ /g, '_'))}`;
@@ -136,7 +48,8 @@ const dataMode = (mode) => ({ pve: 'pve', season: 'pvp-season' }[mode] ?? 'regul
 const profiles = () => state.share ?? store.profiles;
 const isFound = (id) => profiles()[prefs.mode]?.[id]?.[0] === 1;
 
-function savePrefs() { storage.set(PREFS_KEY, prefs); }
+// 表示中の言語は推測のこともあるので保存しない。保存するのは本人がボタンで選んだ langChoice だけ
+function savePrefs() { storage.set(PREFS_KEY, { ...prefs, lang: undefined }); }
 function saveStore() {
   storage.set(STORE_KEY, store);
   idbSet(STORE_KEY, store);
@@ -217,7 +130,11 @@ function applyI18n() {
   document.documentElement.lang = prefs.lang;
   document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => { el.placeholder = t(el.dataset.i18nPlaceholder); });
-  $('lang-btn').textContent = prefs.lang === 'ja' ? 'EN' : '日本語';
+  document.querySelectorAll('[data-i18n-aria]').forEach((el) => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
+  document.title = t('metaTitle');
+  document.querySelector('meta[name="description"]').content = t('metaDesc');
+  document.querySelectorAll('#lang-switch button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === prefs.lang)));
+  document.documentElement.classList.remove('i18n-wait');
 }
 
 // ---------- アイテム一覧 ----------
@@ -229,7 +146,7 @@ async function loadItems() {
   else { showNotice(t('loading')); showSkeleton(); }
 
   try {
-    const res = await fetch(`api/items.php?mode=${mode}`);
+    const res = await fetch(`/api/items.php?mode=${mode}`);
     if (!res.ok) throw new Error(res.status);
     const data = await res.json();
     storage.set(cacheKey, data);
@@ -433,7 +350,7 @@ async function sync({ key = store.key, join = false } = {}) {
   state.syncing = true;
   setSyncStatus(t('syncing'));
   try {
-    const res = await fetch('api/sync.php', {
+    const res = await fetch('/api/sync.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key, join, profiles: store.profiles }),
@@ -528,7 +445,7 @@ async function handleHash() {
   }
   if (s && /^[a-f0-9]{16}$/.test(s)) {
     try {
-      const res = await fetch(`api/share.php?id=${s}`);
+      const res = await fetch(`/api/share.php?id=${s}`);
       if (!res.ok) throw new Error(res.status);
       state.share = (await res.json()).profiles ?? {};
       $('share-banner').hidden = false;
@@ -602,9 +519,15 @@ function bind() {
   });
   $('done-last').addEventListener('change', (e) => { prefs.doneLast = e.target.checked; savePrefs(); render(); });
   $('search').addEventListener('input', render);
-  $('lang-btn').addEventListener('click', () => {
-    prefs.lang = prefs.lang === 'ja' ? 'en' : 'ja';
+  // JA / EN ボタン：その場で切り替え、URLも / と /en/ で合わせる（再読み込みなし）
+  $('lang-switch').addEventListener('click', (e) => {
+    const lang = e.target.closest('button')?.dataset.lang;
+    if (!lang || lang === prefs.lang) return;
+    prefs.lang = lang;
+    prefs.langChoice = lang;
     savePrefs();
+    document.documentElement.dataset.lang = lang;
+    history.replaceState(null, '', (lang === 'en' ? '/en/' : '/') + location.search + location.hash);
     applyI18n();
     renderChip();
     render();

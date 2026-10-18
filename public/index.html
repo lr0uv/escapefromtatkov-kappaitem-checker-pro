@@ -1,23 +1,54 @@
 <!doctype html>
-<html lang="ja">
+<html lang="ja" data-page-lang="ja">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Kappaチェッカー｜タルコフ コレクター納品アイテム一覧・進捗管理</title>
-  <meta name="description" content="Escape from Tarkov のKappaコンテナ（コレクター任務）の納品アイテムを、登録なしでチェックできる進捗管理ツール。アイテムは自動で最新に更新。PvP・PvE・シーズン別に記録、合言葉で端末間同期。">
+  <script>
+    // 表示言語を最初に決める。/en/ なら英語、それ以外は「本人が選んだ言語 → ブラウザの言語」の順。
+    // 検索エンジンのクローラーにはこのページ本来の言語のまま見せる（英語は /en/ を読んでもらう）
+    (function () {
+      var d = document.documentElement, page = d.getAttribute('data-page-lang'), lang = page;
+      if (page === 'ja' && !/bot|crawl|spider|slurp|facebookexternalhit|embedly|preview/i.test(navigator.userAgent)) {
+        var choice = null;
+        try { choice = JSON.parse(localStorage.getItem('kcc:prefs') || '{}').langChoice; } catch (e) {}
+        if (choice === 'ja' || choice === 'en') lang = choice;
+        else {
+          var list = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''];
+          lang = 'en';
+          for (var i = 0; i < list.length; i++) {
+            var c = String(list[i]).toLowerCase().slice(0, 2);
+            if (c === 'ja' || c === 'en') { lang = c; break; }
+          }
+        }
+      }
+      d.setAttribute('data-lang', lang);
+      d.lang = lang;
+      // 日本語のHTMLを英語に書き換える間だけ画面を隠す（一瞬日本語が見えるのを防ぐ）
+      if (lang !== page) {
+        d.className += ' i18n-wait';
+        setTimeout(function () { d.classList.remove('i18n-wait'); }, 2000);
+      }
+    })();
+  </script>
+  <style>.i18n-wait body { visibility: hidden; }</style>
+  <title data-i18n="metaTitle">Kappaチェッカー｜タルコフ コレクター納品アイテム一覧・進捗管理</title>
+  <meta name="description" data-i18n-content="metaDesc" content="Escape from Tarkov のKappaコンテナ（コレクター任務）の納品アイテムを、登録なしでチェックできる進捗管理ツール。アイテムは自動で最新に更新。PvP・PvE・シーズン別に記録、合言葉で端末間同期。">
   <meta name="theme-color" content="#171913">
-  <meta property="og:title" content="Kappaチェッカー｜タルコフ コレクター納品アイテム進捗管理">
-  <meta property="og:description" content="登録不要。コレクター任務の納品アイテムをチェックして、合言葉でPCとスマホを同期。">
+  <meta property="og:title" data-i18n-content="ogTitle" content="Kappaチェッカー｜タルコフ コレクター納品アイテム進捗管理">
+  <meta property="og:description" data-i18n-content="ogDesc" content="登録不要。コレクター任務の納品アイテムをチェックして、合言葉でPCとスマホを同期。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://kappacontainer.com/">
   <link rel="canonical" href="https://kappacontainer.com/">
+  <link rel="alternate" hreflang="ja" href="https://kappacontainer.com/">
+  <link rel="alternate" hreflang="en" href="https://kappacontainer.com/en/">
+  <link rel="alternate" hreflang="x-default" href="https://kappacontainer.com/">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23171913'/%3E%3Crect x='6' y='6' width='20' height='20' fill='none' stroke='%23c98a3e' stroke-width='2.5'/%3E%3Crect x='12' y='12' width='8' height='8' fill='%23c98a3e'/%3E%3C/svg%3E">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="assets/icon.svg">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/assets/icon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+JP:wght@400;500;600&display=swap">
-  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="/assets/style.css">
 </head>
 <body>
   <header class="top">
@@ -33,7 +64,9 @@
       </div>
       <div class="top-actions">
         <button id="sync-chip" class="chip sync-chip" type="button" data-state="off"><span class="dot" aria-hidden="true"></span><span id="sync-chip-text" data-i18n="chipOff">同期オフ</span></button>
-        <button id="lang-btn" class="chip mono" type="button">EN</button>
+        <div id="lang-switch" class="lang-switch" role="group" aria-label="表示言語" data-i18n-aria="langLabel">
+          <button type="button" data-lang="ja" lang="ja">JA</button><button type="button" data-lang="en" lang="en">EN</button>
+        </div>
       </div>
     </div>
     <div class="bar" aria-hidden="true"><div id="bar-fill"></div></div>
@@ -165,6 +198,6 @@
   </div>
 
   <div id="toast" class="toast" role="status" hidden></div>
-  <script type="module" src="assets/app.js"></script>
+  <script type="module" src="/assets/app.js"></script>
 </body>
 </html>
