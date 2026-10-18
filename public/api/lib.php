@@ -115,3 +115,24 @@ function merge_profiles(array $a, array $b): array {
     }
     return $out;
 }
+
+// 1日1回、進捗データベースを丸ごとコピーして7日分残す（サーバー側の事故に備える）
+function backup_daily(): void {
+    try {
+        $dir = data_dir() . '/backups';
+        if (!is_dir($dir)) mkdir($dir, 0700, true);
+        $file = $dir . '/sync-' . gmdate('Ymd') . '.sqlite';
+        if (is_file($file)) return;
+        $tmp = $file . '.tmp';
+        @unlink($tmp);
+        // VACUUM INTO は書き込み中でも整合性の取れたコピーを作れる
+        db()->exec('VACUUM INTO ' . db()->quote($tmp));
+        rename($tmp, $file);
+        $old = glob($dir . '/sync-*.sqlite') ?: [];
+        rsort($old);
+        foreach (array_slice($old, 7) as $f) @unlink($f);
+    } catch (Throwable $e) {
+        // バックアップに失敗しても同期そのものは止めない
+        error_log('kcc backup failed: ' . $e->getMessage());
+    }
+}

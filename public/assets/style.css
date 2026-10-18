@@ -121,6 +121,10 @@ h1 { margin: 0; font-size: 18px; letter-spacing: .02em; }
   display: flex; gap: 12px; align-items: flex-start; justify-content: space-between;
   margin: 16px 0 0; padding: 12px 14px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); font-size: 14px;
 }
+.safety { margin: 16px 0 0; padding: 14px 16px; border-radius: var(--radius); background: #2c2614; border: 1px solid #4a3f1c; font-size: 14px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.safety strong { color: var(--accent); }
+.safety p { margin: 4px 0 0; color: var(--text); }
+.safety p.small { color: var(--muted); }
 .guide ol { margin: 6px 0 0; padding-left: 20px; color: var(--muted); }
 .complete { flex-direction: column; gap: 2px; background: var(--ok-bg); border-color: var(--ok); }
 .complete strong { color: var(--ok); font-size: 16px; }
